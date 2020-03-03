@@ -1,0 +1,8 @@
+Serial: 00001464
+Commit: 47cda1ddcaf811b376f201f8e32767f908124718
+CCamDeviceVersion: 1.4.1-1935316
+SystemVersion: 3.2.3
+SystemBuildDate: Sat Apr  6 03:07:48 2019
+SystemVersionControlID: 8284fb1e
+SystemId: 1c
+

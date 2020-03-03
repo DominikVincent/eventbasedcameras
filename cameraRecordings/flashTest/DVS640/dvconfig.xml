@@ -1,0 +1,99 @@
+<dv version="2.0">
+    <node name="mainloop" path="/mainloop/">
+        <attr key="_guiSupport" type="string">{"lastDeployedHash":"0bfac0b4ee3d2ab067119285f34a57abd297df1e"}</attr>
+        <node name="Recorder" path="/mainloop/Recorder/">
+            <attr key="_guiSupport" type="string">{"boxX":700.0,"boxY":500.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,directory,prefix</attr>
+            <attr key="compression" type="string">LZ4</attr>
+            <attr key="directory" type="string">/home/dominik</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="moduleLibrary" type="string">dv_output_file</attr>
+            <attr key="prefix" type="string">dvSave</attr>
+            <attr key="running" type="bool">false</attr>
+            <node name="inputs" path="/mainloop/Recorder/inputs/">
+                <node name="output0" path="/mainloop/Recorder/inputs/output0/">
+                    <attr key="from" type="string">capture[events]</attr>
+                </node>
+                <node name="output1" path="/mainloop/Recorder/inputs/output1/">
+                    <attr key="from" type="string">capture[frames]</attr>
+                </node>
+                <node name="output2" path="/mainloop/Recorder/inputs/output2/">
+                    <attr key="from" type="string"/>
+                </node>
+                <node name="output3" path="/mainloop/Recorder/inputs/output3/">
+                    <attr key="from" type="string"/>
+                </node>
+            </node>
+        </node>
+        <node name="_visualizer_capture___events_0" path="/mainloop/_visualizer_capture___events_0/">
+            <attr key="_guiSupport" type="string">{"visualizerX":0,"visualizerY":1,"size":10,"minimized":false,"boxX":150.0,"boxY":550.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,ipAddress,portNumber</attr>
+            <attr key="compression" type="string">NONE</attr>
+            <attr key="ipAddress" type="string">127.0.0.1</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="maxConcurrentConnections" type="int">10</attr>
+            <attr key="maxConnectionsBacklog" type="int">5</attr>
+            <attr key="maxDataBacklog" type="int">5</attr>
+            <attr key="moduleLibrary" type="string">dv_output_net_tcp_server</attr>
+            <attr key="portNumber" type="int">42643</attr>
+            <attr key="running" type="bool">false</attr>
+            <node name="inputs" path="/mainloop/_visualizer_capture___events_0/inputs/">
+                <node name="output0" path="/mainloop/_visualizer_capture___events_0/inputs/output0/">
+                    <attr key="from" type="string">capture[events]</attr>
+                </node>
+            </node>
+        </node>
+        <node name="_visualizer_capture___frames_0" path="/mainloop/_visualizer_capture___frames_0/">
+            <attr key="_guiSupport" type="string">{"visualizerX":10,"visualizerY":0,"size":6,"minimized":true,"boxX":150.0,"boxY":550.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,ipAddress,portNumber</attr>
+            <attr key="compression" type="string">NONE</attr>
+            <attr key="ipAddress" type="string">127.0.0.1</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="maxConcurrentConnections" type="int">10</attr>
+            <attr key="maxConnectionsBacklog" type="int">5</attr>
+            <attr key="maxDataBacklog" type="int">5</attr>
+            <attr key="moduleLibrary" type="string">dv_output_net_tcp_server</attr>
+            <attr key="portNumber" type="int">0</attr>
+            <attr key="running" type="bool">false</attr>
+            <node name="inputs" path="/mainloop/_visualizer_capture___frames_0/inputs/">
+                <node name="output0" path="/mainloop/_visualizer_capture___frames_0/inputs/output0/">
+                    <attr key="from" type="string">capture[frames]</attr>
+                </node>
+            </node>
+        </node>
+        <node name="capture" path="/mainloop/capture/">
+            <attr key="_guiSupport" type="string">{"boxX":300.0,"boxY":100.0}</attr>
+            <attr key="_priorityAttributes" type="string">biasSensitivity</attr>
+            <attr key="activityDecrementRate" type="int">1</attr>
+            <attr key="activityDecrementTime" type="int">3</attr>
+            <attr key="activityMonitor" type="bool">false</attr>
+            <attr key="activityNegativeThreshold" type="int">20</attr>
+            <attr key="activityPositiveMaxValue" type="int">300</attr>
+            <attr key="activityPositiveThreshold" type="int">300</attr>
+            <attr key="biasSensitivity" type="string">Default</attr>
+            <attr key="busNumber" type="int">0</attr>
+            <attr key="crop" type="bool">false</attr>
+            <attr key="cropEndX" type="int">639</attr>
+            <attr key="cropEndY" type="int">479</attr>
+            <attr key="cropStartX" type="int">0</attr>
+            <attr key="cropStartY" type="int">0</attr>
+            <attr key="devAddress" type="int">0</attr>
+            <attr key="dualBinning" type="bool">false</attr>
+            <attr key="eventsFlatten" type="bool">false</attr>
+            <attr key="eventsOffOnly" type="bool">false</attr>
+            <attr key="eventsOnOnly" type="bool">false</attr>
+            <attr key="externalTriggerMode" type="string">Reset Timestamps</attr>
+            <attr key="fixedReadTime" type="bool">false</attr>
+            <attr key="globalHold" type="bool">true</attr>
+            <attr key="globalReset" type="bool">false</attr>
+            <attr key="globalResetDuringReadout" type="bool">false</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="moduleLibrary" type="string">dv_dvxplorer</attr>
+            <attr key="running" type="bool">true</attr>
+            <attr key="serialNumber" type="string">DXA00001</attr>
+            <attr key="subsample" type="bool">false</attr>
+            <attr key="subsampleHorizontal" type="string">none</attr>
+            <attr key="subsampleVertical" type="string">none</attr>
+        </node>
+    </node>
+</dv>

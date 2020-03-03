@@ -1,0 +1,75 @@
+<dv version="2.0">
+    <node name="mainloop" path="/mainloop/">
+        <attr key="_guiSupport" type="string">{"lastDeployedHash":"d0c8549a0b759913c9f3c34f3f82f8ea7b3de7eb"}</attr>
+        <node name="_visualizer_capture___events_65d79f76cfd94e7e91ab211e3493a47e" path="/mainloop/_visualizer_capture___events_65d79f76cfd94e7e91ab211e3493a47e/">
+            <attr key="_guiSupport" type="string">{"visualizerX":0,"visualizerY":0,"size":2,"minimized":false,"boxX":400.0,"boxY":500.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,ipAddress,portNumber</attr>
+            <attr key="compression" type="string">NONE</attr>
+            <attr key="ipAddress" type="string">127.0.0.1</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="maxConcurrentConnections" type="int">10</attr>
+            <attr key="maxConnectionsBacklog" type="int">5</attr>
+            <attr key="maxDataBacklog" type="int">5</attr>
+            <attr key="moduleLibrary" type="string">dv_output_net_tcp_server</attr>
+            <attr key="portNumber" type="int">39179</attr>
+            <attr key="running" type="bool">true</attr>
+            <node name="inputs" path="/mainloop/_visualizer_capture___events_65d79f76cfd94e7e91ab211e3493a47e/inputs/">
+                <node name="output0" path="/mainloop/_visualizer_capture___events_65d79f76cfd94e7e91ab211e3493a47e/inputs/output0/">
+                    <attr key="from" type="string">capture[events]</attr>
+                </node>
+            </node>
+        </node>
+        <node name="_visualizer_capture___frames_0" path="/mainloop/_visualizer_capture___frames_0/">
+            <attr key="_guiSupport" type="string">{"visualizerX":12,"visualizerY":4,"size":4,"minimized":true,"boxX":400.0,"boxY":500.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,ipAddress,portNumber</attr>
+            <attr key="compression" type="string">NONE</attr>
+            <attr key="ipAddress" type="string">127.0.0.1</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="maxConcurrentConnections" type="int">10</attr>
+            <attr key="maxConnectionsBacklog" type="int">5</attr>
+            <attr key="maxDataBacklog" type="int">5</attr>
+            <attr key="moduleLibrary" type="string">dv_output_net_tcp_server</attr>
+            <attr key="portNumber" type="int">0</attr>
+            <attr key="running" type="bool">false</attr>
+            <node name="inputs" path="/mainloop/_visualizer_capture___frames_0/inputs/">
+                <node name="output0" path="/mainloop/_visualizer_capture___frames_0/inputs/output0/">
+                    <attr key="from" type="string">capture[frames]</attr>
+                </node>
+            </node>
+        </node>
+        <node name="_visualizer_capture___imu_0" path="/mainloop/_visualizer_capture___imu_0/">
+            <attr key="_guiSupport" type="string">{"visualizerX":12,"visualizerY":8,"size":4,"minimized":true,"boxX":400.0,"boxY":500.0}</attr>
+            <attr key="_priorityAttributes" type="string">compression,ipAddress,portNumber</attr>
+            <attr key="compression" type="string">NONE</attr>
+            <attr key="ipAddress" type="string">127.0.0.1</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="maxConcurrentConnections" type="int">10</attr>
+            <attr key="maxConnectionsBacklog" type="int">5</attr>
+            <attr key="maxDataBacklog" type="int">5</attr>
+            <attr key="moduleLibrary" type="string">dv_output_net_tcp_server</attr>
+            <attr key="portNumber" type="int">0</attr>
+            <attr key="running" type="bool">false</attr>
+            <node name="inputs" path="/mainloop/_visualizer_capture___imu_0/inputs/">
+                <node name="output0" path="/mainloop/_visualizer_capture___imu_0/inputs/output0/">
+                    <attr key="from" type="string">capture[imu]</attr>
+                </node>
+            </node>
+        </node>
+        <node name="capture" path="/mainloop/capture/">
+            <attr key="_guiSupport" type="string">{"boxX":350.0,"boxY":100.0}</attr>
+            <attr key="_priorityAttributes" type="string">file,loop</attr>
+            <attr key="file" type="string">/home/dominik/dvSave-2020_02_28_17_49_56.aedat4</attr>
+            <attr key="logLevel" type="string">NOTICE</attr>
+            <attr key="loop" type="bool">false</attr>
+            <attr key="mode" type="string">timeInterval</attr>
+            <attr key="moduleLibrary" type="string">dv_input_file</attr>
+            <attr key="pause" type="bool">false</attr>
+            <attr key="running" type="bool">true</attr>
+            <attr key="seek" type="long">41260</attr>
+            <attr key="seekEnd" type="long">589959</attr>
+            <attr key="seekStart" type="long">0</attr>
+            <attr key="timeDelay" type="long">10000</attr>
+            <attr key="timeInterval" type="long">10</attr>
+        </node>
+    </node>
+</dv>
