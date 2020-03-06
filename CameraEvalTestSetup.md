@@ -10,4 +10,4 @@ We then flashed the phone camera of a samsung a50 phone at a periodicity of 10hz
 We positioned the phone TODO cm right of the center of the camera sensor, with the flashlight aimed roughly at the center of the cardboard box.
 
 ###Analysis
-TO
+TODO
