@@ -3,13 +3,36 @@
 In this document we the test setups used to compare the dvs DVXplorer 640x480, the Propesee 640x480 VGA and the Celex 1000x800 event cameras.
 
 # Flash test
+### Why flash test?
+TODO
+
 
 ### Physical setup
 
-For the flash test we setup a simple surface 15cm centered in front of the camera lens, the side of a small cardboard box. 
-We used the same lens with static sensors and the same mount on every sensor. The lens we used was TODO, with the settings TODO.
-We then flashed the phone flashlight of a samsung a50 phone at a periodicity of 10hz, having it stay lit for approximately 25% of the time and be turned off for the rest using a phone app. 
-We positioned the phone TODO cm right of the center of the camera sensor, with the flashlight aimed roughly at the center of the cardboard box.
+We did two test setups for every camera. One with higher intensity with the flashed area closer and one lower intensity test with the flashed area farther away.
+
+We setup a simple surface either about 15cm or 30cm centered in front of the center of the tripod mountpoint, the side of a small cardboard box with the width of 10cm and height of 14cm on the shown side. We also made sure to not have an immideate background that would also get illuminated by the camera, the wall being 3.5 meter back from the flashed area. 
+We used the same lens with the same settings and the same tripod on every sensor. The lens we used was TODO (prophesee 640), with the settings open maxed out and distance maxed out. Height of the tripod was about 10cm to the bottom of the camera housing.
+We then flashed the built-in phone flashlight of a samsung a50 phone at a periodicity of 10hz, having it stay lit for about 1/4 of the time and be turned off for the rest using a phone app. (should we say that the lightsource doesnt matter?)
+We positioned the phone flashlight 5 cm left of the center of the camera sensor and 4 cm over the camera mountpoint but at the same distance from the box, with the flashlight aimed parallel with the camera. 
+
+The only thing that was changed between the tests were the cameras or the distance of the tripod and the light.
+
+Due to the roughly similar sensor position of the cameras relative to the mounting point (only varying a couple of centimeters in total relative distance) and the simplicity of the test we are performing we determine that using the mounting point is good enough to achieve accurate results. 
+
+### Software Settings
+It is very difficult to determine what is fair settings for the devices, due to the different available settings. Therefor we only tried to tweak the basic settings and see what results changed and kept the rest at default.
+
+For the prophesee we tested changing the sensitivity metric since -that one seemed the most relevant of the basic settings-
+
+
+Prophesee default basic settings: Polarity 48. We changed sensitivities between 50, 60, 70, 80 and 90 for both test setups.
+
+ 
+ 
+ 
+ 
+
 
 ### Analysis
 
