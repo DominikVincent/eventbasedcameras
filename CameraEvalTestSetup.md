@@ -23,14 +23,10 @@ Due to the roughly similar sensor position of the cameras relative to the mounti
 ### Software Settings
 It is very difficult to determine what is fair settings for the devices, due to the different available settings. Therefor we only tried to tweak the basic settings and see what results changed and kept the rest at default.
 
+###### Prophesee
 For the prophesee we tested changing the sensitivity metric since -that one seemed the most relevant of the basic settings-
-
-
-Prophesee default basic settings: Polarity 48. We changed sensitivities between 50, 60, 70, 80 and 90 for both test setups.
-
- 
- 
- 
+Default basic settings: Polarity 48. \
+We changed sensitivities between 50, 60, 70, 80 and 90 for both test setups.
  
 
 
