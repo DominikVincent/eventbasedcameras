@@ -67,7 +67,7 @@ We used the same lenses for the same cameras as last time.
 
 
 ### Software settings
-TODO
+We tested using the same software settings as the last one.
 
 ### Analysis
 TODO
