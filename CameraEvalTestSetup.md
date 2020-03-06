@@ -15,7 +15,7 @@ We setup a simple surface either about 15cm or 30cm centered in front of the cen
 
 We also made sure to not have an immideate background that would also get illuminated by the camera, the wall being 3.5 meter back from the flashed area. 
 We wanted to use the same lens with the same settings and the same tripod on every sensor, however we ran into compatibility issues. The lens we used on the prophesee camera was its default lens TODO (prophesee 640), with the settings open maxed out and distance maxed out.
-For the celex, davis and the DVXplorer we instead used the DVXplorer default lens (TODO) with maximum open and near settings. We did however tweak wide/tele in order to achieve the sharp image that we ideally require, the Prophesee cameras lens lacked this setting and was sharp at the settings we tested it at.
+For the celex we used the default celex lens (todo) that is quite telescopic with max far settings and max open (this caused issues  were). On davis and the DVXplorer we instead used the DVXplorer default lens (TODO) with maximum open and near settings. We did however tweak wide/tele in order to achieve the sharp image that we ideally require, the Prophesee cameras lens lacked this setting and was sharp at the settings we tested it at.
 
 Height of the tripod was about 10cm to the bottom of the camera housing.
 We then flashed the built-in phone flashlight of a samsung a50 phone at a periodicity of 10hz, having it stay lit for about 1/4 of the time and be turned off for the rest using a phone app. (should we say that the lightsource doesnt matter?)
@@ -29,8 +29,8 @@ Due to the roughly similar sensor position of the cameras relative to the mounti
 It is very difficult to determine what is a fair settings for the devices, due to the different available settings. Therefor we only tried to tweak the basic settings and see what results changed and kept the rest at default.
 
 ##### Prophesee
-For the prophesee we tested changing the sensitivity metric since TODO ~~ that one seemed the most relevant of the basic settings
-Default basic settings: Polarity 48 ~~
+For the prophesee we tested changing the sensitivity metric since TODO ~~that one seemed the most relevant of the basic settings~~
+~~Default basic settings: Polarity 48~~
 We changed sensitivities between 50, 60, 70, 80 and 90 for both test setups.
  
 ##### DVXplorer
@@ -42,7 +42,7 @@ For the 346 DVS we tried to enable / disable hardware filter isntead since that 
 
 
 #### Celex
-For the Celex camera TODO
+For the Celex camera we also did not find any sensitivity slider. We instead changed the threshhold variable since it seemed to have similar effects. We recorded 50, 100, 150, 200 and 250. 50 and 250 had massive issues however.
 
 
 ### Analysis
@@ -58,7 +58,12 @@ TODO
 
 
 ### Physical setup
-We use a simple tablefan with a removed front grill to test 
+We recorded a simple tablefan with a removed front safety grill.
+We had a relatively uniform white wall as background to simplify the test. We then put the sensor at a similar height as the center of the fan. Due to the differences in lenses etc we decided here that the best way to achieve our objective would be to make sure that within these parameters that every camera showed the entire moving part of the fan. We adjusted the distance back of the cameras and the lens settings to achieve this.
+
+We used the same lenses for the same cameras as last time.
+
+
 
 
 ### Software settings
