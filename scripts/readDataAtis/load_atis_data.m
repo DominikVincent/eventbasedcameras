@@ -105,5 +105,6 @@ end
 if (flipY > 0)
     td_data.y = flipY - td_data.y;
 end
-
+%return a matlab matrix
+td_data = [td_data.x, td_data.y, td_data.ts, td_data.p];
 end
