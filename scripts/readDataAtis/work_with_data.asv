@@ -1,0 +1,23 @@
+arr = load_atis_data("log_td.dat")
+
+timeslice = 1000
+
+acc = zeros(1, ceil(arr.ts(end)/timeslice));
+
+count = 0
+oldts = 0
+index = 1
+for v = arr.ts
+    if (v - oldts) > timeslice
+        wr
+        count = count + 1;
+        acc(1, index) = count;
+        count = 0;
+        index = index +1;
+        oldts = v
+    else
+        count = count + 1;
+    end
+end
+
+plot(acc)
