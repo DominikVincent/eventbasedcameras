@@ -4,6 +4,8 @@ from os import listdir, getcwd, system
 from os.path import isfile, join, isdir, normpath
 from scipy.ndimage import gaussian_filter
 from scipy.signal import find_peaks
+from sklearn.mixture import GaussianMixture
+from scipy.stats import norm
 
 def getFirstPeaks(peaks, timewindow):
     firstpeaks = []
@@ -16,6 +18,58 @@ def getFirstPeaks(peaks, timewindow):
         if peaks[i+1]-peaks[i] < 1/20 * (1000000/timewindow):
             firstpeaks.append(peaks[i])
     return firstpeaks
+
+def getFirstMeansAndVars(peaks, vars, timewindow):
+    firstpeaks = []
+    firstvars = []
+    for i in range(len(peaks)):
+        if i == len(peaks)-1 and len(firstpeaks) != 0 and firstpeaks[-1] != peaks[i-1]:
+            firstpeaks.append(peaks[i])
+            firstvars.append(vars[i])
+            continue
+        elif i== len(peaks) -1:
+            break
+        if peaks[i+1]-peaks[i] < 1/20 * (1000000/timewindow):
+            firstpeaks.append(peaks[i])
+            firstvars.append(vars[i])
+    return (firstpeaks, firstvars)
+
+def getSecondPeaks(peaks, timewindow):
+    secondpeaks = []
+    for i in range(len(peaks)):
+
+        if i == len(peaks)-1 and len(secondpeaks) != 0 and secondpeaks[-1] != peaks[i-1]:
+            secondpeaks.append(peaks[i])
+            continue
+        elif i== len(peaks) -1:
+            break
+        if peaks[i+1]-peaks[i] >= 1/20 * (1000000/timewindow):
+            secondpeaks.append(peaks[i])
+    return secondpeaks
+
+def getSecondMeansAndVars(peaks, vars, timewindow):
+    secondpeaks = []
+    secondvar = []
+    for i in range(len(peaks)):
+
+        if i == len(peaks)-1 and len(secondpeaks) != 0 and secondpeaks[-1] != peaks[i-1]:
+            secondpeaks.append(peaks[i])
+            secondvar.append(vars[i])
+            continue
+        elif i== len(peaks) -1:
+            break
+        if peaks[i+1]-peaks[i] >= 1/20 * (1000000/timewindow):
+            secondpeaks.append(peaks[i])
+            secondvar.append(vars[i])
+
+    return (secondpeaks, secondvar)
+
+def signalToPoints(signal):
+    signal = signal.astype(np.int32)
+    dpoints = []
+    for i in range(len(signal)):
+        dpoints += [i] * signal[i]
+    return np.asarray(dpoints, dtype = np.int32)
 
 def getWidths(widths, peaks, firstpeaks, secondpeaks, timewindow):
     firstwidths = np.full_like(firstpeaks, -99999)
@@ -35,18 +89,17 @@ def getWidths(widths, peaks, firstpeaks, secondpeaks, timewindow):
 
     return (firstwidths, secondwidths)
 
-def getSecondPeaks(peaks, timewindow):
-    secondpeaks = []
-    for i in range(len(peaks)):
 
-        if i == len(peaks)-1 and len(secondpeaks) != 0 and secondpeaks[-1] != peaks[i-1]:
-            secondpeaks.append(peaks[i])
-            continue
-        elif i== len(peaks) -1:
-            break
-        if peaks[i+1]-peaks[i] >= 1/20 * (1000000/timewindow):
-            secondpeaks.append(peaks[i])
-    return secondpeaks
+
+def getNoise(peaks, signal, timewindow):
+    indices = np.ones_like(signal, dtype=np.uint8)
+    for peak in np.nditer(peaks):
+        for i in range(int(peak - 1/30*(1000000/timewindow)), int(peak + 1/30*(1000000/timewindow))):
+            if( 0<=i and i < signal.shape[0]):
+                indices[i] = 0
+    noise_values = signal[indices.astype(np.bool)]
+    print("number of noise valuse: ", noise_values.shape, "from ", signal.shape)
+    return np.average(noise_values)
 
 def savefig(path, timewindow, maxdepth = 3):
     if maxdepth == 0:
@@ -79,42 +132,101 @@ def savefig(path, timewindow, maxdepth = 3):
             min_height = np.max(smoothedSignal)/3.5
             peaks, properties = find_peaks(smoothedSignal, height=min_height, distance= int(np.ceil((1.0/80) * (1000000/timewindow))), \
                 width=1, rel_height=0.6)
-            
+
+
+            noise = getNoise(peaks, smoothedSignal, timewindow)
+            print("noise:", noise)
+            if not np.isnan(noise):
+                smothedwithoutnoise = np.subtract(smoothedSignal, int(noise))
+            else:
+                smothedwithoutnoise = smoothedSignal
 
             firstpeaks = getFirstPeaks(peaks, timewindow)
             secondpeaks = getSecondPeaks(peaks, timewindow)
+
+            #fit gaussian models
+            gaussModel = GaussianMixture(peaks.shape[0], covariance_type="full", means_init=peaks.reshape(-1,1) )
+            print("fitting the model with inital guess, ", peaks)
+            gaussModel.fit(signalToPoints(smothedwithoutnoise).reshape(-1, 1))
+            
+            print("plotting the guassians")
+            x = np.arange(smothedwithoutnoise.shape[0])
+            logprob = gaussModel.score_samples(x.reshape(-1, 1))
+            print("SUM:",sum(np.exp(logprob)))
+            pdf = np.exp(logprob)
+            #normalize
+            pdf = pdf * max(smothedwithoutnoise) / max(pdf)
+            plt.plot(x, pdf, linewidth = 0.2, color = "g")
+
             #countevents[ countevents==0 ] = np.nan
-            print("plotting")
+            print("plotting others ")
             plt.plot(countevents, linewidth = 0.1, color = "r")
-            plt.plot(smoothedSignal, linewidth = 0.2, color = "g")
+            #plt.plot(smoothedSignal, linewidth = 0.2, color = "g")
+            plt.plot(smothedwithoutnoise, linewidth = 0.3, color= "m")
+            
 
             plt.plot(firstpeaks, smoothedSignal[firstpeaks], "x", color = "b")
             plt.plot(secondpeaks, smoothedSignal[secondpeaks], "x", color = "c")
 
 
             plt.plot(np.full_like(smoothedSignal, min_height), "--", color = "gray", linewidth = 0.2)
+            plt.plot(np.full_like(smoothedSignal, noise), "--", color="black", linewidth = 0.3)
+
             plt.hlines(y=properties["width_heights"], xmin=properties["left_ips"], xmax=properties["right_ips"], color = "C1")
             plt.ylabel('number of events')
             plt.xlabel("timewindow  in"+str(timewindow)+" \u03BCs")
-            plt.savefig(join(path, file_current[:-4]+"_figure_filtered.png"), dpi=200, orientation='landscape', format ="png", )
+            plt.savefig(join(path, file_current[:-4]+"_figure_filteredAndGaussianMixture.png"), dpi=200, orientation='landscape', format ="png", )
             plt.clf()
             plt.cla()
-            print("saved file")
+            # print("saved file")
 
 
+            
             #calculate the variances without gaussian mixture models
-            first_widths, rightwidths = getWidths(properties["widths"], peaks, firstpeaks, secondpeaks, timewindow)
+            first_widths, second_widths = getWidths(properties["widths"], peaks, firstpeaks, secondpeaks, timewindow)
             spanfirst = np.average(first_widths)
-            spansecond = np.average(rightwidths)
+            spanstd_first = np.std(first_widths)
+            spansecond = np.average(second_widths)
+            spanstd_second = np.std(second_widths)
 
             heightfirst = np.average(smoothedSignal[firstpeaks])
+            heightstd_first = np.std(smoothedSignal[firstpeaks])
             heightsecond = np.average(smoothedSignal[secondpeaks])
-            stringToSafe =  "time window:                  "+str(timewindow) +" microseconds\n"\
-                            "total peaks found:            "+ str(len(peaks)) +"\n"\
-                            "first peaks average span:     "+str(spanfirst) +" microseconds\n"\
-                            "second peaks average span:    "+str(spansecond) +" microseconds\n\n"\
-                            "first peaks average height:   "+str(heightfirst)+" events per time window\n"\
-                            "second peaks average height:  "+str(heightsecond) +" events per time window"
+            heightstd_second = np.std(smoothedSignal[secondpeaks])
+
+
+            (firstmeans, firstvars) = getFirstMeansAndVars(gaussModel.means_, gaussModel.covariances_, timewindow)
+
+            (secondmeans, secondvars) = getSecondMeansAndVars(gaussModel.means_, gaussModel.covariances_, timewindow)
+
+            averageFirstVar = np.average(firstvars)
+            stdFristVar = np.std(firstvars)
+
+            averageSecondVar = np.average(secondvars)
+            stdSecondVar = np.std(secondvars)
+
+
+            stringToSafe =  "time window:                     "+str(timewindow) +" microseconds\n"\
+                            "total peaks found:               "+str(len(peaks)) +"\n"\
+                            "average noise:                   "+str(noise) +"\n"\
+                            "first peaks average span:        "+str(spanfirst) +" microseconds\n"\
+                            "first peaks average span std:    "+str(spanstd_first)+" microseconds\n"\
+                            "second peaks average span:       "+str(spansecond) +" microseconds\n"\
+                            "second peaks average span std:   "+str(spanstd_second)+ "microseconds\n\n"\
+                            "first peaks average height:      "+str(heightfirst)+" events per time window\n"\
+                            "first peaks avearage std heigh:  "+str(heightstd_first)+ " events per time window\n"\
+                            "second peaks average height:     "+str(heightsecond) +" events per time window\n"\
+                            "second peaks average std height: "+str(heightstd_second)+" events per time window\n\n"\
+                            "GAUSSIAN MIXTURE MODEL ESTIMATION \n"\
+                            "average first var:               "+str(averageFirstVar)+" unit is i dont know\n"\
+                            "standard deviation first var:    "+str(stdFristVar) +   " \n"\
+                            "average second var:              "+str(averageSecondVar)+ "\n"\
+                            "standard deviation second var:   "+str(stdSecondVar)+"\n\n"\
+                            
+
+            for (mean, covariance) in zip(gaussModel.means_, gaussModel.covariances_):
+                stringToSafe += "mean: " +str(mean)+ " variance: "+ str(covariance) +"\n"
+
             f= open(join(path, file_current[:-4]+"_stats.txt"),"w+")
             f.write(stringToSafe)
             f.close()
