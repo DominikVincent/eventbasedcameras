@@ -9,11 +9,11 @@
 import sys;
 import csv;
 import numpy as np;
+import time;
 
 
 #only timer
 print('started');
-import time;
 start_time = time.time();
 
 
@@ -32,6 +32,7 @@ for arg in sys.argv[1:]:
         data = [data for data in data_iter];
 
     data_array.append(np.asarray(data, dtype = 'int32'));
+    np.save(str(i), data_array[i]);
     i = i + 1;
     #end timer
     print("--- %s seconds ---" % (time.time() - start_time));
