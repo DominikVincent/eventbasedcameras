@@ -33,6 +33,7 @@ def transformInAllSubDirs(engine, path, filename, maxdepth = 3):
         print("got result from matlab")
         
         print("transforming to numpy array")
+        
         nparrayonedim = np.asarray(matlabarray._data, dtype=np.int32)
 
         print("got the numpy array")
