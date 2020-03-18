@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from os import listdir, getcwd, system
-from os.path import isfile, join, isdir, normpath
+from os.path import isfile, join, isdir, normpath, pardir, abspath
 from scipy.ndimage import gaussian_filter
 from scipy.signal import find_peaks
 from sklearn.mixture import GaussianMixture
 from scipy.stats import norm
+import csv
 
 def getFirstPeaks(peaks, timewindow):
     firstpeaks = []
@@ -102,6 +103,7 @@ def getNoise(peaks, signal, timewindow):
     return np.average(noise_values)
 
 def savefig(path, timewindow, maxdepth = 3):
+    filename = "_filteredAndGaussianMixture"
     if maxdepth == 0:
         return
     else:
@@ -111,7 +113,8 @@ def savefig(path, timewindow, maxdepth = 3):
     onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
     
     for file_current in onlyfiles:
-        if file_current[-3:] == "npy": #and file_current[:-4]+"_figure.png" not in onlyfiles:
+        if file_current == "dvSave-2020_03_06_18_31_21events.npy": #and file_current[:-4]+"_figure.png" not in onlyfiles:
+            print("current file: ", file_current)
             print("load np array dv tranform")
             nparray = np.load(join(path,file_current), allow_pickle=True)
             print("loaded array", nparray.shape)
@@ -128,23 +131,32 @@ def savefig(path, timewindow, maxdepth = 3):
             for e in np.nditer(nparray[:,2]):
                 countevents[int(e/timewindow)] +=1#
             
+            #cut first
+            cutfirst = 0
+            cutlast = 1
+            #print(countevents)
+            countevents = countevents[cutfirst:]
+            countevents = countevents[:-cutlast]
             smoothedSignal = gaussian_filter(countevents, 1)
+            #smoothedSignal = countevents
+
             min_height = np.max(smoothedSignal)/3.5
-            peaks, properties = find_peaks(smoothedSignal, height=min_height, distance= int(np.ceil((1.0/80) * (1000000/timewindow))), \
+            peaks, properties = find_peaks(smoothedSignal, distance= int(np.ceil((1.0/120) * (1000000/timewindow))),height=min_height,  \
                 width=1, rel_height=0.6)
 
 
-            noise = getNoise(peaks, smoothedSignal, timewindow)
+            noise = getNoise(peaks, smoothedSignal, timewindow) *1.00
             print("noise:", noise)
             if not np.isnan(noise):
                 smothedwithoutnoise = np.subtract(smoothedSignal, int(noise))
+                smothedwithoutnoise[smothedwithoutnoise < 0] = 0
             else:
                 smothedwithoutnoise = smoothedSignal
 
             firstpeaks = getFirstPeaks(peaks, timewindow)
             secondpeaks = getSecondPeaks(peaks, timewindow)
-
             #fit gaussian models
+            #peaks = np.append(peaks, 0)
             gaussModel = GaussianMixture(peaks.shape[0], covariance_type="full", means_init=peaks.reshape(-1,1) )
             print("fitting the model with inital guess, ", peaks)
             gaussModel.fit(signalToPoints(smothedwithoutnoise).reshape(-1, 1))
@@ -160,7 +172,7 @@ def savefig(path, timewindow, maxdepth = 3):
 
             #countevents[ countevents==0 ] = np.nan
             print("plotting others ")
-            plt.plot(countevents, linewidth = 0.1, color = "r")
+            plt.plot(smoothedSignal, linewidth = 0.1, color = "r")
             #plt.plot(smoothedSignal, linewidth = 0.2, color = "g")
             plt.plot(smothedwithoutnoise, linewidth = 0.3, color= "m")
             
@@ -168,17 +180,22 @@ def savefig(path, timewindow, maxdepth = 3):
             plt.plot(firstpeaks, smoothedSignal[firstpeaks], "x", color = "b")
             plt.plot(secondpeaks, smoothedSignal[secondpeaks], "x", color = "c")
 
-
-            plt.plot(np.full_like(smoothedSignal, min_height), "--", color = "gray", linewidth = 0.2)
+            #min height
+            plt.plot(np.full_like(smoothedSignal, min_height), "--", color = "blue", linewidth = 0.2)
+            
+            #noise
             plt.plot(np.full_like(smoothedSignal, noise), "--", color="black", linewidth = 0.3)
 
+            #peak span
             plt.hlines(y=properties["width_heights"], xmin=properties["left_ips"], xmax=properties["right_ips"], color = "C1")
             plt.ylabel('number of events')
             plt.xlabel("timewindow  in"+str(timewindow)+" \u03BCs")
-            plt.savefig(join(path, file_current[:-4]+"_figure_filteredAndGaussianMixture.png"), dpi=200, orientation='landscape', format ="png", )
+            plt.title(file_current[:-4]+" "+filename)
+            plt.savefig(join(path, file_current[:-4]+filename+".png"), dpi=200, orientation='landscape', format ="png", )
+            plt.show()
             plt.clf()
             plt.cla()
-            # print("saved file")
+            print("saved file")
 
 
             
@@ -206,28 +223,42 @@ def savefig(path, timewindow, maxdepth = 3):
             stdSecondVar = np.std(secondvars)
 
 
-            stringToSafe =  "time window:                     "+str(timewindow) +" microseconds\n"\
-                            "total peaks found:               "+str(len(peaks)) +"\n"\
-                            "average noise:                   "+str(noise) +"\n"\
-                            "first peaks average span:        "+str(spanfirst) +" microseconds\n"\
-                            "first peaks average span std:    "+str(spanstd_first)+" microseconds\n"\
-                            "second peaks average span:       "+str(spansecond) +" microseconds\n"\
-                            "second peaks average span std:   "+str(spanstd_second)+ "microseconds\n\n"\
-                            "first peaks average height:      "+str(heightfirst)+" events per time window\n"\
-                            "first peaks avearage std heigh:  "+str(heightstd_first)+ " events per time window\n"\
-                            "second peaks average height:     "+str(heightsecond) +" events per time window\n"\
-                            "second peaks average std height: "+str(heightstd_second)+" events per time window\n\n"\
+            stringToSafe =  "time window:                     "+str(timewindow)       +" microseconds\n"\
+                            "total peaks found:               "+str(len(peaks))       +"\n"\
+                            "average noise:                   "+str(noise)            +"\n"\
+                            "first peaks average span:        "+str(spanfirst)        +" microseconds\n"\
+                            "first peaks average span std:    "+str(spanstd_first)    +" microseconds\n"\
+                            "second peaks average span:       "+str(spansecond)       +" microseconds\n"\
+                            "second peaks average span std:   "+str(spanstd_second)   + " microseconds\n\n"\
+                            "first peaks average height:      "+str(heightfirst)      +" events per time window\n"\
+                            "first peaks avearage std heigh:  "+str(heightstd_first)  + " events per time window\n"\
+                            "second peaks average height:     "+str(heightsecond)     +" events per time window\n"\
+                            "second peaks average std height: "+str(heightstd_second) +" events per time window\n\n"\
                             "GAUSSIAN MIXTURE MODEL ESTIMATION \n"\
-                            "average first var:               "+str(averageFirstVar)+" unit is i dont know\n"\
-                            "standard deviation first var:    "+str(stdFristVar) +   " \n"\
-                            "average second var:              "+str(averageSecondVar)+ "\n"\
-                            "standard deviation second var:   "+str(stdSecondVar)+"\n\n"\
+                            "average first var:               "+str(averageFirstVar)  +" unit is i dont know\n"\
+                            "standard deviation first var:    "+str(stdFristVar)      +" \n"\
+                            "average second var:              "+str(averageSecondVar) + "\n"\
+                            "standard deviation second var:   "+str(stdSecondVar)     +"\n\n"\
                             
+            #safe to csv to parentdir
+            with open(join(path, file_current[:-4]+filename+".csv"),  mode='w') as safeFile:
+                safeFileWriter = csv.writer(safeFile, delimiter=',', dialect='excel', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                safeFileWriter.writerow([str(timewindow), \
+                str(len(peaks)), \
+                str(noise), \
+                str(spanfirst),       \
+                str(spanstd_first),   \
+                str(spansecond),      \
+                str(spanstd_second),  \
+                str(heightfirst),     \
+                str(heightstd_first), \
+                str(heightsecond),    \
+                str(heightstd_second)])\
 
             for (mean, covariance) in zip(gaussModel.means_, gaussModel.covariances_):
                 stringToSafe += "mean: " +str(mean)+ " variance: "+ str(covariance) +"\n"
 
-            f= open(join(path, file_current[:-4]+"_stats.txt"),"w+")
+            f= open(join(path, file_current[:-4]+filename+"_stats.txt"),"w+")
             f.write(stringToSafe)
             f.close()
         
@@ -244,7 +275,7 @@ def savefig(path, timewindow, maxdepth = 3):
 #for current dir
 #startpath = getcwd()
 #
-testpath = "C:\\Users\\dominik\\OneDrive\\Dokumente\\TU\\KTH\\Module\\P3\\degreeProject\\cameraRecordings\\flashTest2.0"
+testpath = 'C:\\Users\\dominik\\OneDrive - Technische Universität Berlin\\Dokumente\\degreeProject\\cameraRecordings\\flashTest2.0\\DVS346NearBox'
 startpath = normpath(testpath)
 timewindow = int(input("enter timewindow in \u03BCs:"))
 savefig(startpath, timewindow, 5)
