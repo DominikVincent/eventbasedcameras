@@ -96,29 +96,17 @@ centimeter = math.ceil(474/24.5);
 #test Experimental rpm measurements approximate...
 
 #----TOP second lap start------
-#rpm = 463 #1/4 lap avg rpm
-#rpm = 435 #0.3858
-#rpm = 440 #0.4002
-#rpm = 445 #0.4133
-#rpm = 463 #0.4153
-#rpm = 450 #0.42
-#rpm = 453 #0.4264
-#rpm = 455 #0.4278
-#rpm = 456.5 #0.4289
-#rpm = 457.25 #0.4289
-#rpm = 457.5 #0.4292
-#rpm = 457.8 #0.429332
-#rpm = 457.9 #0.429205
-#rpm = 458 #0.4293185506416288
-#rpm = 459 #0.4284
-#rpm = 460 #0.4267
 
-#v2
-#rpm = 460 #0.42534969838922837
-#rpm = 465 #0.43127502776188714
-#rpm = 467 #0.43219854292912097
-rpm = 468 #0.4326433033757124
-#rpm = 469 #0.43184372565108564
+#rpm = 468 #0.49796568935866786
+
+
+#rpm = 458 #0.5304613764329404
+#rpm = 454 #0.5315737986384236
+#rpm = 453 #0.5317412935323383
+rpm = 452 #0.5311987026086269
+#rpm = 451 #0.5316030654973533
+#rpm = 450 #0.5311052672894262
+
 
 
 startBigFrontAngle = np.arccos(1/radiusDistCm)
@@ -144,7 +132,7 @@ lapTime = (60 / rpm ) * 1000 * 1000;
 
 
 #viewStep = 200
-viewStep = 1000
+viewStep = 10000
 #viewStep = 1*lapTime/4
 
 
@@ -162,7 +150,7 @@ tempTime = startTime
 
 # fill a with content
 for e in nparray[startIndex:endIndex]:
-    #break; #for not drawing
+    break; #for not drawing
     #1ms window
     #1 lap window
     #if(e[2] > (startTime +1*lapTime/4)):
@@ -218,6 +206,7 @@ botRad = math.sqrt((centimeter)**2)
 
 
 
+
 print("----------------------starting generating ratio---------")
 #counters
 evsProcessed = 0;
@@ -236,20 +225,25 @@ for a in nparray[startIndex:endIndex]:
     evPos = [a[1], a[0]]
 
     #must generate the place of the virtual spinner at that time
-    frontTopPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
-    frontBotPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
+    topPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
+    botPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
 
     #herons
-    s = (np.linalg.norm(frontTopPos - evPos) +  np.linalg.norm(evPos -frontBotPos) + np.linalg.norm(frontTopPos -frontBotPos))/2
-    area = math.sqrt(s * (s - np.linalg.norm(frontTopPos - evPos)) * (s - np.linalg.norm(evPos - frontBotPos)) * (s-np.linalg.norm(frontTopPos - frontBotPos)))
+    s = (np.linalg.norm(topPos - evPos) +  np.linalg.norm(evPos -botPos) + np.linalg.norm(topPos -botPos))/2
+    area = math.sqrt(s * (s - np.linalg.norm(topPos - evPos)) * (s - np.linalg.norm(evPos - botPos)) * (s-np.linalg.norm(topPos - botPos)))
 
-    #things used to decide if behind
-    vector = [frontTopPos[0] - frontBotPos[0], frontTopPos[1] - frontBotPos[1]]
-    pointBehind= [frontBotPos[0] - vector[0]/10000, frontBotPos[1] -   vector[1]/10000]
+    #things used to decide if too far out or too far in
+    vector = [topPos[0] - botPos[0], topPos[1] - botPos[1]]
+    pointBehind= [botPos[0] - vector[0]/10000, botPos[1] -   vector[1]/10000]
     distPointBehind = math.sqrt((pointBehind[0] - evPos[0])**2 + (pointBehind[1] - evPos[1])**2)
-    distPoint = math.sqrt((frontBotPos[0] - evPos[0])**2 + (frontBotPos[1] - evPos[1])**2)
+    distPointBot = math.sqrt((botPos[0] - evPos[0])**2 + (botPos[1] - evPos[1])**2)
+    pointFront = [topPos[0] + vector[0]/10000, topPos[1] +  vector[1]/10000]
+    distPointFront = math.sqrt((pointFront[0] - evPos[0])**2 + (pointFront[1] - evPos[1])**2)
+    distPointTop = math.sqrt((topPos[0] - evPos[0])**2 + (topPos[1] - evPos[1])**2)
+
+
     #if(NOT BEHIND IT && NOT OUTSIDE CIRCLE (RADIUS 2 HIGH)):
-    if(distPointBehind >= distPoint and math.sqrt((frontTopPos[0] - evPos[0])**2 +  (frontTopPos[1] - evPos[1])**2) <= pixelSpinner/2):
+    if(distPointBehind >= distPointBot and  distPointFront >= distPointTop):
         if(area <= smalltriangle ):
             frontSmall += 1;
             frontBig +=1;
@@ -267,7 +261,6 @@ print(frontSmall)
 print(frontBig)
 print(extra)
 print(discarded)
-
 
 
 

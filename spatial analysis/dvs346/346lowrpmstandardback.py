@@ -107,15 +107,13 @@ centimeter = math.ceil(258/24.5);
 #----TOP second lap start------
 
 
-#rpm = 40 #0.7938053837150978
-#rpm = 39 #0.8521622458458045
-#rpm = 38.9 #0.8550091675078799
-rpm = 38.8 #0.8561642426611261
-#rpm = 38.7 #0.8554939412610393
+#rpm = 39.5 #0.879440632328672
 
-#rpm = 38.5 #0.8498710548937738
+#rpm = 38.7 #0.9118327549165427
+#rpm = 38.5 #0.9130756578947369
+rpm = 38.4 #0.9150326797385621
+#rpm = 38.3 #0.914559292904493
 
-#rpm =  38 # 0.8111925004565469
 
 
 
@@ -153,7 +151,7 @@ tempTime = startTime
 
 # fill a with content
 for e in nparray[startIndex:endIndex]:
-    #break; #for not drawing
+    break; #for not drawing
     #1ms window
     #1 lap window
     #if(e[2] > (startTime +4*lapTime/4)):
@@ -207,7 +205,6 @@ topRad = math.sqrt((pixelSpinner/2)**2)
 botRad = math.sqrt((centimeter)**2)
 
 
-
 print("----------------------starting generating ratio---------")
 #counters
 evsProcessed = 0;
@@ -226,20 +223,25 @@ for a in nparray[startIndex:endIndex]:
     evPos = [a[1], a[0]]
 
     #must generate the place of the virtual spinner at that time
-    frontTopPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
-    frontBotPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
+    topPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
+    botPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
 
     #herons
-    s = (np.linalg.norm(frontTopPos - evPos) +  np.linalg.norm(evPos -frontBotPos) + np.linalg.norm(frontTopPos -frontBotPos))/2
-    area = math.sqrt(s * (s - np.linalg.norm(frontTopPos - evPos)) * (s - np.linalg.norm(evPos - frontBotPos)) * (s-np.linalg.norm(frontTopPos - frontBotPos)))
+    s = (np.linalg.norm(topPos - evPos) +  np.linalg.norm(evPos -botPos) + np.linalg.norm(topPos -botPos))/2
+    area = math.sqrt(s * (s - np.linalg.norm(topPos - evPos)) * (s - np.linalg.norm(evPos - botPos)) * (s-np.linalg.norm(topPos - botPos)))
 
-    #things used to decide if behind
-    vector = [frontTopPos[0] - frontBotPos[0], frontTopPos[1] - frontBotPos[1]]
-    pointBehind= [frontBotPos[0] - vector[0]/10000, frontBotPos[1] -   vector[1]/10000]
+    #things used to decide if too far out or too far in
+    vector = [topPos[0] - botPos[0], topPos[1] - botPos[1]]
+    pointBehind= [botPos[0] - vector[0]/10000, botPos[1] -   vector[1]/10000]
     distPointBehind = math.sqrt((pointBehind[0] - evPos[0])**2 + (pointBehind[1] - evPos[1])**2)
-    distPoint = math.sqrt((frontBotPos[0] - evPos[0])**2 + (frontBotPos[1] - evPos[1])**2)
+    distPointBot = math.sqrt((botPos[0] - evPos[0])**2 + (botPos[1] - evPos[1])**2)
+    pointFront = [topPos[0] + vector[0]/10000, topPos[1] +  vector[1]/10000]
+    distPointFront = math.sqrt((pointFront[0] - evPos[0])**2 + (pointFront[1] - evPos[1])**2)
+    distPointTop = math.sqrt((topPos[0] - evPos[0])**2 + (topPos[1] - evPos[1])**2)
+
+
     #if(NOT BEHIND IT && NOT OUTSIDE CIRCLE (RADIUS 2 HIGH)):
-    if(distPointBehind >= distPoint and math.sqrt((frontTopPos[0] - evPos[0])**2 +  (frontTopPos[1] - evPos[1])**2) <= pixelSpinner/2):
+    if(distPointBehind >= distPointBot and  distPointFront >= distPointTop):
         if(area <= smalltriangle ):
             frontSmall += 1;
             frontBig +=1;

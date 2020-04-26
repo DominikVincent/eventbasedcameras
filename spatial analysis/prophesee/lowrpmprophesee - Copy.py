@@ -8,7 +8,7 @@ from os.path import isfile, join, isdir, normpath
 
 #draw box
 
-testPath = "H:\\evs\\fixedSpinningWheel\\\celex\\100rpm\\100rpmCelex.npy"
+testPath = "H:\\evs\\fixedSpinningWheel\\prophesee\\10rpm\\log.npy"
 
 timewindow = 1;
 startTime = 0;
@@ -28,7 +28,7 @@ print("length",v)
 countevents = np.zeros(int(np.ceil(v)))
 i = 0
 for e in np.nditer(nparray[:,2]):
-    break; #run like this after first time
+    break; #to make testing fast! Remove later
     countevents[int(e/timewindow)] += 1
     #10 event limit to detect start CHANGE for cameras
     if (countevents[int(e/timewindow)] > 10):
@@ -51,81 +51,87 @@ def spinnerPosition(radius, time, rpm, startAngle):
     relativeTime = np.mod(time,  lapTime)
     angle = -( 2 * np.pi * relativeTime / lapTime);
     #add corrective angle to set startagnle
-    angle -= startAngle;
+    angle += startAngle;
     #x and y coordinates, based on angle radius + relative to center
     x = radius * np.cos(angle) + camWidth /2 + xOffset
     # minus or plus for some?
 
-    y = camHeight -  (radius * np.sin(angle) + camHeight /2) + yOffset
-    return np.array([x,y]);
+    y =  (radius * np.sin(angle) + camHeight /2) + yOffset
+    #return np.array([x,y]);
+    return np.array([y,x]); #inverted
 
+
+
+#margins
+marginsmall = 3 # in pixels
+marginlarge = 15 # in pixels
+
+
+#constants
+radiusDistCm = 24.5/2/2 # fixed for shorter
 
 
 #----------------Presets--------------
-#celex test
+#prophesee test
 #outer box test Assuming height and width of camera same fov per pixel, top to bottom 24.5cm on 800, 1cm is 32.65 pixels, say 33
-camWidth = 1280
-camHeight = 800
+camWidth = 640
+camHeight = 480
 
-radiusDistCm = 24.5/2
 
 
 #manual fix settings!!
-pixelSpinner = 776/2 #radius in pixels, manually fixed
-xOffset = 0.5
-yOffset = 2.5
+#474, 0, -6
+#pixelSpinner = 300 #diameter in pixels, manually fixed
+pixelSpinner = 474/2
+xOffset = -0.5 #actually yOffset here
+yOffset = -7 #inverted xOffset here
 
+#xOffset = 0 #actually yOffset here
+#yOffset = -6 #inverted xOffset here
 
 #help thing
-centimeter = math.ceil(pixelSpinner*2/24.5);
+centimeter = math.ceil(474/24.5);
 
-#margins
-#marginsmall = 3 # in pixels
-#marginlarge = 15 # in pixels
-#margins
-marginsmall = 5 # in pixels
-marginlarge = 25 # in pixels
 
 #test Experimental rpm measurements approximate...
 
 #----TOP second lap start------
-#rpm = 39.735 #full lap
-#rpm = 41.3 #1/4 rpm
-#rpm = 465 #1/4 lap avg rpm
-#rpm = 463 #0.5616403721682848
-#rpm = 462 #0.5775650343341185
-#rpm  = 460 #0.6075490196078431
-#rpm = 459 #0.6237623762376238
-#rpm = 458 #0.6400863125888873
-#rpm = 455 #0.687475442043222
+#test
+#rpm = 37.4 #0.7591720194611439
+#rpm = 37.2 #0.8001716042097337
+#rpm = 37.1 #0.8042073357749833
+rpm = 37 #0.8055347766669064
+#rpm = 36.9 #0.8034016775396086
+#rpm = 36.8 #0.7966902228669015
+
+#rpm = 36.5 #0.7490053085577062
 
 
-#v2
-#rpm = 465 #0.7519085849381865
-#rpm = 460 #0.8058942587747445
-#rpm = 458 #0.816739957507782
-#rpm = 457 #0.8189454958738943
-rpm = 456 #0.8201897420693745
-
-#rpm = 455 #0.8191116161865705
-#rpm = 450 #0.7905635900639024
-
-
-#startBigFrontAngle = np.arccos(1/radiusDistCm)
-startBigFrontAngle = np.arccos(2/radiusDistCm) #manual modify
+startBigFrontAngle = np.arccos(1/radiusDistCm)
+#startBigFrontAngle = np.arccos(1.05/radiusDistCm) #manual modify
 startSmallFrontAngle = 0
 
+
 #place presets
-#start of events: 1313433
-startIndex = 20330000 #a point where it starts aligned
+#startIndex of event§§s 2029765
+#startIndex = 2029765
+#startIndex = 14776000 #old
+startIndex = 14774000
+#startIndex = 4045000 - 1000 #to compensate for alignment window
 
 startTime = nparray[startIndex][2]
 print("startTime: ", startTime)
-endIndex = 38137578
+endIndex = 19324645
+
+
 
 lapTime = (60 / rpm ) * 1000 * 1000;
 
 
+
+viewStep = 3000
+#viewStep = 50000
+#viewStep = 1*lapTime/4
 
 
 #distance between top and bottom of box in pixels.
@@ -135,16 +141,17 @@ frontDist = np.linalg.norm((spinnerPosition(pixelSpinner/2, 0, 10, startBigFront
 
 
 #------------------------------draw part here--------------------
-a = np.zeros((camHeight,camWidth)) #y, x format
-tempTime = startTime
-#viewStep = 10000
-#viewStep = 1000
-viewStep = lapTime/8
+#a = np.zeros((camHeight,camWidth)) #y, x format
+a = np.zeros((camWidth, camHeight)) #x, y format
 
+tempTime = startTime
 
 # fill a with content
 for e in nparray[startIndex:endIndex]:
-    break; #for not drawing
+    #break; #for not drawing
+    #1ms window
+    #1 lap window
+    #if(e[2] > (startTime +1*lapTime/4)):
     if(e[2] > tempTime+viewStep):
         #draw box start
         # start pos
@@ -173,10 +180,11 @@ for e in nparray[startIndex:endIndex]:
         plt.show()
 
         tempTime = tempTime + viewStep;
-        a = np.zeros((camHeight,camWidth))
+        #a = np.zeros((camHeight,camWidth)) #y, x format
+        a = np.zeros((camWidth, camHeight)) #x, y format
 
 
-    if(tempTime > startTime+viewStep*10):
+    if(tempTime > startTime+viewStep*5):
         break;
 
     #inversion
@@ -193,6 +201,8 @@ largetriangle = frontDist * marginlarge / 2
 # radius top pos
 topRad = math.sqrt((pixelSpinner/2)**2)
 botRad = math.sqrt((centimeter)**2)
+
+
 
 print("----------------------starting generating ratio---------")
 #counters
@@ -212,25 +222,20 @@ for a in nparray[startIndex:endIndex]:
     evPos = [a[1], a[0]]
 
     #must generate the place of the virtual spinner at that time
-    topPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
-    botPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
+    frontTopPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
+    frontBotPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
 
     #herons
-    s = (np.linalg.norm(topPos - evPos) +  np.linalg.norm(evPos -botPos) + np.linalg.norm(topPos -botPos))/2
-    area = math.sqrt(s * (s - np.linalg.norm(topPos - evPos)) * (s - np.linalg.norm(evPos - botPos)) * (s-np.linalg.norm(topPos - botPos)))
+    s = (np.linalg.norm(frontTopPos - evPos) +  np.linalg.norm(evPos -frontBotPos) + np.linalg.norm(frontTopPos -frontBotPos))/2
+    area = math.sqrt(s * (s - np.linalg.norm(frontTopPos - evPos)) * (s - np.linalg.norm(evPos - frontBotPos)) * (s-np.linalg.norm(frontTopPos - frontBotPos)))
 
-    #things used to decide if too far out or too far in
-    vector = [topPos[0] - botPos[0], topPos[1] - botPos[1]]
-    pointBehind= [botPos[0] - vector[0]/10000, botPos[1] -   vector[1]/10000]
+    #things used to decide if behind
+    vector = [frontTopPos[0] - frontBotPos[0], frontTopPos[1] - frontBotPos[1]]
+    pointBehind= [frontBotPos[0] - vector[0]/10000, frontBotPos[1] -   vector[1]/10000]
     distPointBehind = math.sqrt((pointBehind[0] - evPos[0])**2 + (pointBehind[1] - evPos[1])**2)
-    distPointBot = math.sqrt((botPos[0] - evPos[0])**2 + (botPos[1] - evPos[1])**2)
-    pointFront = [topPos[0] + vector[0]/10000, topPos[1] +  vector[1]/10000]
-    distPointFront = math.sqrt((pointFront[0] - evPos[0])**2 + (pointFront[1] - evPos[1])**2)
-    distPointTop = math.sqrt((topPos[0] - evPos[0])**2 + (topPos[1] - evPos[1])**2)
-
-
+    distPoint = math.sqrt((frontBotPos[0] - evPos[0])**2 + (frontBotPos[1] - evPos[1])**2)
     #if(NOT BEHIND IT && NOT OUTSIDE CIRCLE (RADIUS 2 HIGH)):
-    if(distPointBehind >= distPointBot and  distPointFront >= distPointTop):
+    if(distPointBehind >= distPoint and math.sqrt((frontTopPos[0] - evPos[0])**2 +  (frontTopPos[1] - evPos[1])**2) <= pixelSpinner/2):
         if(area <= smalltriangle ):
             frontSmall += 1;
             frontBig +=1;
@@ -248,5 +253,7 @@ print(frontSmall)
 print(frontBig)
 print(extra)
 print(discarded)
+
+
 
 

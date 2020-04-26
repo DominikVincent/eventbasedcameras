@@ -94,47 +94,13 @@ centimeter = math.ceil(474/24.5);
 #test Experimental rpm measurements approximate...
 
 #----TOP second lap start------
-#rpm = 463 #1/4 lap avg rpm
-#rpm = 435 #0.3858
-#rpm = 440 #0.4002
-#rpm = 445 #0.4133
-#rpm = 463 #0.4153
-#rpm = 450 #0.42
-#rpm = 453 #0.4264
-#rpm = 455 #0.4278
-#rpm = 456.5 #0.4289
-#rpm = 457.25 #0.4289
-#rpm = 457.5 #0.4292
-#rpm = 457.8 #0.429332
-#rpm = 457.9 #0.429205
-#rpm = 458 #0.4293185506416288
-#rpm = 459 #0.4284
-#rpm = 460 #0.4267
 
-#-- v2
-#rpm = 465 # 0.31679234910328086
-#rpm = 462 #0.341118053373579
-#rpm = 459 #0.3633668477844171
-#rpm = 457.8 #0.3714381768355423
-#rpm =  455 #0.3866897375184668
-#rpm = 453 #0.3954696371981479
-#rpm = 450  #0.40526357955455855
-#rpm = 445 #0.41535320903176576
-#rpm = 441 #0.4175101886310118
-#rpm = 440 #0.41826949018684484
-#rpm = 439.9 #0.4183075451803536
-#rpm = 439.8 #0.4182673461387691
-#rpm = 439.5 #0.4182673461387691
-#rpm = 439 #0.41803727801966634
-#rpm = 435 #0.4169527073936875
 
-#v3
-#rpm = 465 #0.4361003911005206
-#rpm = 463 #0.43704452501663305
-rpm = 462 #0.43755538154017354
-#rpm = 461 #0.43751510011051997
-#rpm = 460 #0.4373364260568801
-#rpm = 455 #0.4330473760710692
+#rpm = 462 #0.5614775974127916
+#rpm = 455 #0.5855853060717943
+#rpm = 451 #0.5939393007595093
+rpm = 450 #0.5953609831029186
+
 
 startBigFrontAngle = np.arccos(-1/radiusDistCm)
 #startBigFrontAngle = np.arccos(1.05/radiusDistCm) #manual modify
@@ -164,7 +130,7 @@ lapTime = (60 / rpm ) * 1000 * 1000;
 
 
 #viewStep = 400
-viewStep = 1000
+viewStep = 50000
 #viewStep = 10000
 
 #viewStep = 1*lapTime/4
@@ -184,7 +150,7 @@ tempTime = startTime
 
 # fill a with content
 for e in nparray[startIndex:endIndex]:
-    #break; #for not drawing
+    break; #for not drawing
     #1ms window
     #1 lap window
     #if(e[2] > (startTime +1*lapTime/4)):
@@ -258,20 +224,25 @@ for a in nparray[startIndex:endIndex]:
     evPos = [a[1], a[0]]
 
     #must generate the place of the virtual spinner at that time
-    frontTopPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
-    frontBotPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
+    topPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
+    botPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
 
     #herons
-    s = (np.linalg.norm(frontTopPos - evPos) +  np.linalg.norm(evPos -frontBotPos) + np.linalg.norm(frontTopPos -frontBotPos))/2
-    area = math.sqrt(s * (s - np.linalg.norm(frontTopPos - evPos)) * (s - np.linalg.norm(evPos - frontBotPos)) * (s-np.linalg.norm(frontTopPos - frontBotPos)))
+    s = (np.linalg.norm(topPos - evPos) +  np.linalg.norm(evPos -botPos) + np.linalg.norm(topPos -botPos))/2
+    area = math.sqrt(s * (s - np.linalg.norm(topPos - evPos)) * (s - np.linalg.norm(evPos - botPos)) * (s-np.linalg.norm(topPos - botPos)))
 
-    #things used to decide if behind
-    vector = [frontTopPos[0] - frontBotPos[0], frontTopPos[1] - frontBotPos[1]]
-    pointBehind= [frontBotPos[0] - vector[0]/10000, frontBotPos[1] -   vector[1]/10000]
+    #things used to decide if too far out or too far in
+    vector = [topPos[0] - botPos[0], topPos[1] - botPos[1]]
+    pointBehind= [botPos[0] - vector[0]/10000, botPos[1] -   vector[1]/10000]
     distPointBehind = math.sqrt((pointBehind[0] - evPos[0])**2 + (pointBehind[1] - evPos[1])**2)
-    distPoint = math.sqrt((frontBotPos[0] - evPos[0])**2 + (frontBotPos[1] - evPos[1])**2)
+    distPointBot = math.sqrt((botPos[0] - evPos[0])**2 + (botPos[1] - evPos[1])**2)
+    pointFront = [topPos[0] + vector[0]/10000, topPos[1] +  vector[1]/10000]
+    distPointFront = math.sqrt((pointFront[0] - evPos[0])**2 + (pointFront[1] - evPos[1])**2)
+    distPointTop = math.sqrt((topPos[0] - evPos[0])**2 + (topPos[1] - evPos[1])**2)
+
+
     #if(NOT BEHIND IT && NOT OUTSIDE CIRCLE (RADIUS 2 HIGH)):
-    if(distPointBehind >= distPoint and math.sqrt((frontTopPos[0] - evPos[0])**2 +  (frontTopPos[1] - evPos[1])**2) <= pixelSpinner/2):
+    if(distPointBehind >= distPointBot and  distPointFront >= distPointTop):
         if(area <= smalltriangle ):
             frontSmall += 1;
             frontBig +=1;
@@ -289,7 +260,5 @@ print(frontSmall)
 print(frontBig)
 print(extra)
 print(discarded)
-
-
 
 

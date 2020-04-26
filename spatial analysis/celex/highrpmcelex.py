@@ -128,7 +128,7 @@ viewStep = 10000
 
 # fill a with content
 for e in nparray[startIndex:endIndex]:
-    break; #for not drawing
+    #break; #for not drawing
     if(e[2] > tempTime+viewStep):
         #draw box start
         # start pos

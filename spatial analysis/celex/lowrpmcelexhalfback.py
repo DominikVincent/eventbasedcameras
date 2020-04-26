@@ -80,21 +80,32 @@ yOffset = 2.5
 centimeter = math.ceil(pixelSpinner*2/24.5);
 
 #margins
-#marginsmall = 3 # in pixels
-#marginlarge = 15 # in pixels
-marginsmall = 5 # in pixels
-marginlarge = 25 # in pixels
+marginsmall = 3 # in pixels
+marginlarge = 15 # in pixels
+#marginsmall = 5 # in pixels
+#marginlarge = 25 # in pixels
 
 #test Experimental rpm measurements approximate...
 
 #----TOP second lap start------
 #rpm = 39.735 #full lap
 #rpm = 41.3 #1/4 rpm
-rpm = 41.4 #1/4 lap avg rpm
+#rpm = 41.4 #1/4 lap avg rpm
 #rpm = 40.9 #1/2 avg rpm
 #rpm = 39.6 #3/4 avg rpm
 #rpm = 39.735 #full lap
 #rpm = 39.7 #full lap
+
+#rpm = 40.6 #0.9445837882498745
+#rpm = 40.5 #0.9460040018832392
+rpm = 40.4 #0.9470517448856799
+#rpm = 40.3 #0.0.9457094357293374
+#rpm = 40.2  #0.9377351337163522
+
+
+#rpm = 40 #0.9070057053491268
+
+
 
 #startBigFrontAngle = np.arccos(1/radiusDistCm)
 startBigFrontAngle = np.arccos(2/radiusDistCm) #manual modify
@@ -103,7 +114,11 @@ startSmallFrontAngle = 0
 #place presets
 #startIndex = 1523604
 #startTime = 4437903
-startIndex = 4045000 #1  lap
+
+startIndex = 4045000
+
+
+
 #startIndex = 4045000 - 1000 #to compensate for alignment window
 
 startTime = nparray[startIndex][2]
@@ -126,8 +141,8 @@ frontDist = np.linalg.norm((spinnerPosition(pixelSpinner/2, 0, 10, startBigFront
 #------------------------------draw part here--------------------
 a = np.zeros((camHeight,camWidth)) #y, x format
 tempTime = startTime
-#viewStep = 50000
-viewStep = lapTime/4
+viewStep = 50000
+#viewStep = lapTime/4
 
 
 # fill a with content
@@ -196,7 +211,7 @@ extra = 0;
 discarded = 0;
 #for e in eventarr:
 for a in nparray[startIndex:endIndex]:
-    if(a[2]> startTime+lapTime/4):
+    if(a[2]> startTime+lapTime/8):
         print(evsProcessed)
         break;
     evsProcessed += 1
@@ -205,20 +220,25 @@ for a in nparray[startIndex:endIndex]:
     evPos = [a[1], a[0]]
 
     #must generate the place of the virtual spinner at that time
-    frontTopPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
-    frontBotPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
+    topPos = spinnerPosition(topRad, a[2]-startTime, rpm, startBigFrontAngle);
+    botPos = spinnerPosition(botRad, a[2]-startTime, rpm, startSmallFrontAngle);
 
     #herons
-    s = (np.linalg.norm(frontTopPos - evPos) +  np.linalg.norm(evPos -frontBotPos) + np.linalg.norm(frontTopPos -frontBotPos))/2
-    area = math.sqrt(s * (s - np.linalg.norm(frontTopPos - evPos)) * (s - np.linalg.norm(evPos - frontBotPos)) * (s-np.linalg.norm(frontTopPos - frontBotPos)))
+    s = (np.linalg.norm(topPos - evPos) +  np.linalg.norm(evPos -botPos) + np.linalg.norm(topPos -botPos))/2
+    area = math.sqrt(s * (s - np.linalg.norm(topPos - evPos)) * (s - np.linalg.norm(evPos - botPos)) * (s-np.linalg.norm(topPos - botPos)))
 
-    #things used to decide if behind
-    vector = [frontTopPos[0] - frontBotPos[0], frontTopPos[1] - frontBotPos[1]]
-    pointBehind= [frontBotPos[0] - vector[0]/10000, frontBotPos[1] -   vector[1]/10000]
+    #things used to decide if too far out or too far in
+    vector = [topPos[0] - botPos[0], topPos[1] - botPos[1]]
+    pointBehind= [botPos[0] - vector[0]/10000, botPos[1] -   vector[1]/10000]
     distPointBehind = math.sqrt((pointBehind[0] - evPos[0])**2 + (pointBehind[1] - evPos[1])**2)
-    distPoint = math.sqrt((frontBotPos[0] - evPos[0])**2 + (frontBotPos[1] - evPos[1])**2)
+    distPointBot = math.sqrt((botPos[0] - evPos[0])**2 + (botPos[1] - evPos[1])**2)
+    pointFront = [topPos[0] + vector[0]/10000, topPos[1] +  vector[1]/10000]
+    distPointFront = math.sqrt((pointFront[0] - evPos[0])**2 + (pointFront[1] - evPos[1])**2)
+    distPointTop = math.sqrt((topPos[0] - evPos[0])**2 + (topPos[1] - evPos[1])**2)
+
+
     #if(NOT BEHIND IT && NOT OUTSIDE CIRCLE (RADIUS 2 HIGH)):
-    if(distPointBehind >= distPoint and math.sqrt((frontTopPos[0] - evPos[0])**2 +  (frontTopPos[1] - evPos[1])**2) <= pixelSpinner/2):
+    if(distPointBehind >= distPointBot and  distPointFront >= distPointTop):
         if(area <= smalltriangle ):
             frontSmall += 1;
             frontBig +=1;
