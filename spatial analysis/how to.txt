@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 quarter lap
 Steps:
 -find start and set it in the code
@@ -24,3 +25,31 @@ dvxplorer
 	1/8th lap
 
 
+=======
+quarter lap
+Steps:
+-find start and set it in the code
+-set base variables pixel number
+-set offset x and y, and other variables
+-set rpm and exact angle
+
+-set boundary size
+	-celex 3,15
+
+-run program to end
+
+
+-----------------------------Other settings
+low rpm (41.3), 50000ms window to check alignment
+high rpm (200), 10000ms window to check alignment
+
+Quarter lap cuz speed was wayy too inconsistent
+
+
+
+dvxplorer
+	half spinner size
+	1/8th lap
+
+
+>>>>>>> master
