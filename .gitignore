@@ -6,3 +6,8 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+scripts/NPtoAedat/log_td.dat.npy
+
+scripts/NPtoAedat/test.aedat
+
+scripts/test.aedat

@@ -103,7 +103,7 @@ def getNoise(peaks, signal, timewindow):
     return np.average(noise_values)
 
 def savefig(path, timewindow, maxdepth = 3):
-    filename = "_filteredAndGaussianMixture"
+    filename = "_CUTfilteredAndGaussianMixture"
     if maxdepth == 0:
         return
     else:
@@ -113,7 +113,7 @@ def savefig(path, timewindow, maxdepth = 3):
     onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
     
     for file_current in onlyfiles:
-        if file_current == "dvSave-2020_03_06_18_31_21events.npy": #and file_current[:-4]+"_figure.png" not in onlyfiles:
+        if file_current == "flashNear200.npy": #and file_current[:-4]+"_figure.png" not in onlyfiles:
             print("current file: ", file_current)
             print("load np array dv tranform")
             nparray = np.load(join(path,file_current), allow_pickle=True)
@@ -132,8 +132,8 @@ def savefig(path, timewindow, maxdepth = 3):
                 countevents[int(e/timewindow)] +=1#
             
             #cut first
-            cutfirst = 0
-            cutlast = 1
+            cutfirst = 50
+            cutlast = 500
             #print(countevents)
             countevents = countevents[cutfirst:]
             countevents = countevents[:-cutlast]
@@ -141,7 +141,7 @@ def savefig(path, timewindow, maxdepth = 3):
             #smoothedSignal = countevents
 
             min_height = np.max(smoothedSignal)/3.5
-            peaks, properties = find_peaks(smoothedSignal, distance= int(np.ceil((1.0/120) * (1000000/timewindow))),height=min_height,  \
+            peaks, properties = find_peaks(smoothedSignal, distance= int(np.ceil((1.0/80) * (1000000/timewindow))),height=min_height,  \
                 width=1, rel_height=0.6)
 
 
@@ -275,7 +275,7 @@ def savefig(path, timewindow, maxdepth = 3):
 #for current dir
 #startpath = getcwd()
 #
-testpath = 'C:\\Users\\dominik\\OneDrive - Technische Universität Berlin\\Dokumente\\degreeProject\\cameraRecordings\\flashTest2.0\\DVS346NearBox'
+testpath = 'C:\\Users\\dominik\\OneDrive - Technische Universität Berlin\\Dokumente\\degreeProject\\cameraRecordings\\flashTest2.0\\celexNearBox\\flashNearCelexFixed'
 startpath = normpath(testpath)
 timewindow = int(input("enter timewindow in \u03BCs:"))
 savefig(startpath, timewindow, 5)
