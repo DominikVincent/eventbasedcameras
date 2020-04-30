@@ -239,8 +239,12 @@ def numOfOnNeighbours(y, x, bitimage):
 eventsArray = np.load("downsampling/test.npy", allow_pickle=True)
 print(eventsArray.shape)
 #drawimg(eventsArray)
-newEvents = downscaleTimeWindow(eventsArray, 640, 480, 4, 4, 100, 3)
+#newEvents = downscaleTimeWindow(eventsArray, 640, 480, 4, 4, 100, 3)
+newEvents = everyEvent(eventsArray, 2, 2)
 
 print(newEvents.shape)
 print(np.max(newEvents, axis=0))
+
+
+np.save("downsampling/downsampled.npy", newEvents)
 

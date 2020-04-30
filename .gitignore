@@ -11,3 +11,9 @@ scripts/NPtoAedat/log_td.dat.npy
 scripts/NPtoAedat/test.aedat
 
 scripts/test.aedat
+
+*.aedat
+
+*.npy
+
+scripts/.vscode/settings.json

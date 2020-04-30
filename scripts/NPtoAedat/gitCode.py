@@ -7,7 +7,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 #from win32api import GetSystemMetrics
-import timer
+#import timer
 
 class Events(object):
     """
@@ -89,6 +89,52 @@ class Events(object):
 
         return self.data[valid_indices.astype('bool')]
 
+    def write_j_aerOld(self, filename):
+        """
+        writes the td events in 'td_events' to a file specified by 'filename'
+        which is compatible with the jAER framework.
+        To view these events in jAER, make sure to select the DAVIS640 sensor.
+        """
+        import time
+        y = 479 - self.data.y
+        #y = td_events.y
+        y_shift = 22 + 32
+
+        #x = 639 - self.data.x
+        x = self.data.x
+        x_shift = 12 + 32
+
+        p = self.data.p 
+        p_shift = 11 + 32
+
+        ts_shift = 0
+
+        y_final = y.astype(dtype=np.uint64) << y_shift
+        x_final = x.astype(dtype=np.uint64) << x_shift
+        p_final = p.astype(dtype=np.uint64) << p_shift
+        ts_final = self.data.ts.astype(dtype=np.uint64) << ts_shift
+        vector_all = np.array(y_final + x_final + p_final + ts_final, dtype=np.uint64)
+        aedat_file = open(filename, 'wb')
+
+        version = '2.0'
+        aedat_file.write('#!AER-DAT' + version + '\r\n')
+        aedat_file.write('# This is a raw AE data file - do not edit\r\n')
+        aedat_file.write \
+            ('# Data format is int32 address, int32 timestamp (8 bytes total), repeated for each event\r\n')
+        aedat_file.write('# Timestamps tick is 1 us\r\n')
+        aedat_file.write('# created ' + time.strftime("%d/%m/%Y") \
+            + ' ' + time.strftime("%H:%M:%S") \
+            + ' by the Python function "write2jAER"\r\n')
+        aedat_file.write \
+            ('# This function fakes the format of DAVIS640 to allow for the full ATIS address space to be used (304x240)\r\n')
+        ##aedat_file.write(vector_all.astype(dtype='>u8').tostring())
+        to_write = bytearray(vector_all[::-1])
+        to_write.reverse()
+        aedat_file.write(to_write)
+        #aedat_file.write(vector_all)
+        #vector_all.tofile(aedat_file)
+        aedat_file.close()
+
     def write_j_aer(self, filename):
         """
         writes the td events in 'td_events' to a file specified by 'filename'
@@ -102,13 +148,13 @@ class Events(object):
         #y = td_events.y
         y_shift = 22 + 32
 
-        #x = 639 - self.data.x
-        x = self.data.x
-
+        x = 639 - self.data.x
+        #x = self.data.x 
+        #print(x[x==-1])
         #x = td_events.x
         x_shift = 12 + 32
 
-        p = self.data.p + 1
+        p = self.data.p 
         p_shift = 11 + 32
 
         ts_shift = 0
@@ -166,16 +212,24 @@ def drawing(events, start, window = 1000):
     plt.pcolormesh(img)
     plt.show()
 
-arr = np.load("NPtoAedat\log_td.dat.npy", allow_pickle=True)
+arr = np.load("NPtoAedat/downsampled.npy", allow_pickle=True)
 
 #drawing(arr, 30000)
 
-#print(arr[:10])
+print(arr[:10])
 arr[arr[:,3] == -1, 3] = 0
-arr = arr[:1]
+arr[arr[:,3] == 1, 3] = 2
+print(arr[:10])
+
+
+# arr = arr[:1]
 #print(arr[:10])
 print(arr.shape)
 eventClass = Events(arr.shape[0], 640, 480)
 
 eventClass.loadNParray(arr)
-eventClass.write_j_aer("test.aedat")
+eventClass.write_j_aer("test3New.aedat")
+eventClass.write_j_aerOld("test3Old.aedat")
+print("events:" ,arr.shape[0], " EPS: ", 1.0*arr.shape[0]/arr[-1,2])
+print("length: ", 1.0*arr[-1,2]-arr[0,2])
+print("start: ", arr[0,2], " last: ", arr[-10:,2])
