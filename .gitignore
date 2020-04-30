@@ -11,9 +11,14 @@ scripts/NPtoAedat/log_td.dat.npy
 scripts/NPtoAedat/test.aedat
 
 scripts/test.aedat
+<<<<<<< HEAD
 
 *.aedat
 
 *.npy
 
 scripts/.vscode/settings.json
+=======
+
+scripts/NPtoAedat/log_td.dat
+>>>>>>> master
