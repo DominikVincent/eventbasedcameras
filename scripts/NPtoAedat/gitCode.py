@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from win32api import GetSystemMetrics
 #import timer
+import os
 
 class Events(object):
     """
@@ -89,14 +90,18 @@ class Events(object):
 
         return self.data[valid_indices.astype('bool')]
 
-    def write_j_aerOld(self, filename):
+    def write_j_aerOld(self, filename, downsampled):
         """
         writes the td events in 'td_events' to a file specified by 'filename'
         which is compatible with the jAER framework.
         To view these events in jAER, make sure to select the DAVIS640 sensor.
         """
         import time
-        y = 479 - self.data.y
+        if downsampled:
+            y = 239 - self.data.y
+        else:
+            y = 479 - self.data.y
+
         #y = td_events.y
         y_shift = 22 + 32
 
@@ -199,6 +204,19 @@ class Events(object):
         self.data.ts = array[:, 2]
         self.data.p = array[:, 3]
 
+def transform_all_subdirs(startpath):
+    for root, dirs, files in os.walk(startpath, topdown=False):
+            for file in files:
+                if file.endswith(".npy"):
+                    events = np.load(os.path.join(root, file), allow_pickle = True)
+                    downsampled = "down" in file
+                    if downsampled:
+                        eventObj = Events(events.shape[0], 320, 240)
+                    else:
+                        eventObj = Events(events.shape[0], 640, 480)
+                    eventObj.loadNParray(events)
+                    eventObj.write_j_aerOld(os.path.join(root, file[:-4]+"_"+str(events.shape[0])+".aedat"), downsampled)
+
 
 def drawing(events, start, window = 1000):
     img = np.zeros((480,640))
@@ -212,24 +230,27 @@ def drawing(events, start, window = 1000):
     plt.pcolormesh(img)
     plt.show()
 
-arr = np.load("NPtoAedat/downsampled.npy", allow_pickle=True)
+#arr = np.load("NPtoAedat/downsampled.npy", allow_pickle=True)
 
 #drawing(arr, 30000)
 
-print(arr[:10])
-arr[arr[:,3] == -1, 3] = 0
-arr[arr[:,3] == 1, 3] = 2
-print(arr[:10])
+# print(arr[:10])
+# arr[arr[:,3] == -1, 3] = 0
+# arr[arr[:,3] == 1, 3] = 2
+# print(arr[:10])
 
 
-# arr = arr[:1]
-#print(arr[:10])
-print(arr.shape)
-eventClass = Events(arr.shape[0], 640, 480)
+# # arr = arr[:1]
+# #print(arr[:10])
+# print(arr.shape)
+# eventClass = Events(arr.shape[0], 640, 480)
 
-eventClass.loadNParray(arr)
-eventClass.write_j_aer("test3New.aedat")
-eventClass.write_j_aerOld("test3Old.aedat")
-print("events:" ,arr.shape[0], " EPS: ", 1.0*arr.shape[0]/arr[-1,2])
-print("length: ", 1.0*arr[-1,2]-arr[0,2])
-print("start: ", arr[0,2], " last: ", arr[-10:,2])
+# eventClass.loadNParray(arr)
+# eventClass.write_j_aer("test3New.aedat")
+# eventClass.write_j_aerOld("test3Old.aedat")
+# print("events:" ,arr.shape[0], " EPS: ", 1.0*arr.shape[0]/arr[-1,2])
+# print("length: ", 1.0*arr[-1,2]-arr[0,2])
+# print("start: ", arr[0,2], " last: ", arr[-10:,2])
+
+path = "C:\\Users\dominik\Documents\KTH\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad"
+transform_all_subdirs(path)

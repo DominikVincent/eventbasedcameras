@@ -75,7 +75,7 @@ def transformInAllSubDirs(path, maxdepth = 3):
 #for current dir
 #startpath = getcwd()
 #
-testpath = "C:\\Users\\dominik\\OneDrive\\Dokumente\\TU\\KTH\\Module\\P3\\degreeProject\\cameraRecordings\\noiseTest\\noiseTest\\dvsExplorer"
+testpath = "C:\\Users\\dominik\\Documents\\KTH\\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad"
 startpath = normpath(testpath)
 transformInAllSubDirs(startpath, 2)
 

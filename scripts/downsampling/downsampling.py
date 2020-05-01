@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-
+import os
 
 def drawimg(events):
     img = np.zeros((480,640))
@@ -236,15 +236,37 @@ def numOfOnNeighbours(y, x, bitimage):
     return np.sum(bitimage[y_low:y_max, x_low:x_max])
 
 
-eventsArray = np.load("downsampling/test.npy", allow_pickle=True)
-print(eventsArray.shape)
-#drawimg(eventsArray)
-#newEvents = downscaleTimeWindow(eventsArray, 640, 480, 4, 4, 100, 3)
-newEvents = everyEvent(eventsArray, 2, 2)
 
-print(newEvents.shape)
-print(np.max(newEvents, axis=0))
+def downsampledInAllSubdirs(startpath, fileending, sample_type, x_scale, y_scale, time_window = 20, num_of_pixels = 3):
+    for root, dirs, files in os.walk(startpath, topdown=False):
+        for file in files:
+            if file.endswith(fileending) and not "down" in file:
+                events = np.load(os.path.join(root, file), allow_pickle = True)
+                if sample_type == "all":
+                    newEvents = everyEvent(events, x_scale,y_scale)
+                elif sample_type == "every_i":
+                    newEvents = everyIRow(events, x_scale,y_scale)
+                elif sample_type == "complex":
+                    newEvents = downscaleTimeWindow(events, 640, 480, x_scale, y_scale, time_window, num_of_pixels)
+                else:
+                    print("not known type - skipping")
+                    continue
+                np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents)
+
+# eventsArray = np.load("downsampling/test.npy", allow_pickle=True)
+# print(eventsArray.shape)
+# #drawimg(eventsArray)
+# #newEvents = downscaleTimeWindow(eventsArray, 640, 480, 4, 4, 100, 3)
+# newEvents = everyEvent(eventsArray, 2, 2)
+
+# print(newEvents.shape)
+# print(np.max(newEvents, axis=0))
 
 
-np.save("downsampling/downsampled.npy", newEvents)
+# np.save("downsampling/downsampled.npy", newEvents)
+path = "C:\\Users\dominik\Documents\KTH\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad"
+sample_type = "every_i" # "ever_i" "complex" "all"
+x_scale = 2
+y_scale = 2
 
+downsampledInAllSubdirs(path, ".npy", sample_type, x_scale,y_scale)
