@@ -1,5 +1,5 @@
 import numpy as np
-
+from tqdm import tqdm
 
 
 
@@ -11,8 +11,13 @@ returns True if the event is outside of the disk
 @param[in] Z - the distance from the sensor to the disk in m
 @param[in] focallength - the focallenght of the camera in m
 """
-def outOfDisk(vec, radius, Z, focallength):
-    if np.linalg.norm(vec) > (radius/Z*focallength):
+def outOfDisk(vec, radius, Z, focallength, px_size, x_res, y_res):
+    length_vec = (radius/Z*focallength) / px_size
+    
+    vec[0] = vec[0] - x_res/2
+    vec[1] = vec[1] - y_res/2
+    norm =  np.linalg.norm(vec)
+    if norm > length_vec:
         return True
     return False
 
@@ -25,11 +30,12 @@ calculates the motion flow induced by the rotation of the camera along the z-axi
 @param[in] y_res - the y resolution
 """
 def getRotationalMatrix(w_z, px_size, x_res, y_res):
-    flow_mat = np.zeros((2,y_res, x_res))
+    flow_mat = np.zeros((y_res, x_res, 2))
 
     for y in range(- (y_res//2) , (y_res//2), 1):
         y_m = y * px_size + 0.5 * px_size
         for x in range(- (x_res//2) , (x_res//2), 1):
+            #print("x:",x, " y: ", y)
             x_m = x * px_size + 0.5 * px_size
             x_flow = w_z * y_m
             y_flow = w_z * x_m
@@ -38,60 +44,12 @@ def getRotationalMatrix(w_z, px_size, x_res, y_res):
             x_flow = x_flow/px_size
             y_flow = y_flow/px_size
 
-            flow_mat[0, y + y // 2, x + x // 2] = x_flow
-            flow_mat[1, y + y // 2, x + x // 2] = y_flow
+            flow_mat[y + y_res // 2, x + x_res // 2, 0] = x_flow
+            flow_mat[y + y_res // 2, x + x_res // 2, 1] = y_flow
+    for i in range(640):
+        print(flow_mat[240, i, :])
+    # print(flow_mat[240,:,:])
     return flow_mat
-
-
-
-"""
-computes statistics for a error and additional the percentail measurements
-
-@param[in] errors - the np array of erros
-@param[in] pa1 - the error measure for the first percentile
-@param[in] pa2 - the error measure for the second percentile
-@param[in] pa3 - the error measure for the third percentile
-@param[out] mean - the mean error
-@param[out] std  - the standard deviation of the erro
-@param[out] cpa1 the number of values below pa1
-"""
-def compute_statistics(errors, pa1, pa2, pa3):
-    mean = np.mean(errors)
-    std  = np.std(errors)
-
-    cpa1, _ = np.where(errors < pa1).shape[0] / errors.shape[0]
-    cpa2, _ = np.where(errors < pa2).shape[0] / errors.shape[0]
-    cpa3, _ = np.where(errors < pa3).shape[0] / errors.shape[0]
-
-    return mean, std, cpa1, cpa2, cpa3
-
-"""
-calculates the angular error between two vectors. returns 181, if one of them is 0
-@param[in] vec1 - first flow vector
-@param[in] vec2 - second flow vector
-@param[out] angular error or 181
-"""
-def calc_angular_error(vec1, vec2):
-    if not vec1.any() or not vec1.any():
-        return 181
-    return np.arccos( np.dot(vec1,vec2)/(np.linalg.norm(vec1) * np.linalg.norm(vec2)) )
-
-"""
-calculates the angular error between two vectors. returns 181, if one of them is 0
-@param[in] vec1 - first flow vector
-@param[in] vec2 - second flow vector this has to be the ground truth
-@param[out] endpoint error 
-@param[out] relative endpoint error - 1
-"""
-def calc_endpoint_error(vec1, vec2):
-    eep = np.linalg.norm(vec1-vec2) 
-
-    if not vec1.any() or not vec1.any():
-        rel_eep = -1
-    else:
-        rel_eep = eep/np.linalg.norm(vec2)
-    
-    return eep, rel_eep
 
 """
 returns a matrix giving the motion vector at the pixel (x,y)
@@ -110,8 +68,66 @@ def getTranslatingFlowMatrix(focalLength, Z, T_x, px_size, x_res, y_res):
     x = np.full((y_res,x_res), x_flow_px)
     y = np.zeros_like(x)
 
-    motion_mat = np.stack(x,y,axis=2)
+    motion_mat = np.stack((x,y), axis=2)
+    print(motion_mat.shape)
+    print(motion_mat)
     return motion_mat
+
+
+"""
+computes statistics for a error and additional the percentail measurements
+
+@param[in] errors - the np array of erros
+@param[in] pa1 - the error measure for the first percentile
+@param[in] pa2 - the error measure for the second percentile
+@param[in] pa3 - the error measure for the third percentile
+@param[out] mean - the mean error
+@param[out] std  - the standard deviation of the erro
+@param[out] cpa1 the number of values below pa1
+"""
+def compute_statistics(errors, pa1, pa2, pa3):
+    mean = np.mean(errors)
+    std  = np.std(errors)
+
+    cpa1 = np.where(errors < pa1)[0].shape[0] / errors.shape[0]
+    cpa2 = np.where(errors < pa2)[0].shape[0] / errors.shape[0]
+    cpa3 = np.where(errors < pa3)[0].shape[0] / errors.shape[0]
+
+    return mean, std, cpa1, cpa2, cpa3
+
+"""
+calculates the angular error between two vectors. returns 181, if one of them is 0
+@param[in] vec1 - first flow vector
+@param[in] vec2 - second flow vector
+@param[out] angular error or 181
+"""
+def calc_angular_error(vec1, vec2):
+    if not vec1.any() or not vec1.any():
+        return 181
+    value = np.dot(vec1,vec2)/(np.linalg.norm(vec1) * np.linalg.norm(vec2)) 
+    if value > 1:
+        value = 1
+    if value < -1:
+        value = -1
+    return np.degrees(np.arccos(value))
+
+"""
+calculates the angular error between two vectors. returns 181, if one of them is 0
+@param[in] vec1 - first flow vector
+@param[in] vec2 - second flow vector this has to be the ground truth
+@param[out] endpoint error 
+@param[out] relative endpoint error - 1
+"""
+def calc_endpoint_error(vec1, vec2):
+    eep = np.linalg.norm(vec1-vec2) 
+
+    if not vec1.any() or not vec1.any():
+        rel_eep = -1
+    else:
+        rel_eep = eep/np.linalg.norm(vec2)
+    
+    return eep, rel_eep
+
 
 
 """
@@ -138,35 +154,41 @@ def evaluateRotationalFlow(arr, w_z, px_size, x_res, y_res, filename, \
     endpoint_errors = []
     relative_endpoint_errors = []
     num_vectors = 0
-    for ofEvent in arr:
-        if outOfDisk(ofEvent[1:3], radius, Z, focallength):
+    zero_vectors = 0
+    for ofEvent in tqdm(arr):
+        if outOfDisk(ofEvent[2:4], radius, Z, focallength, px_size, x_res, y_res):
             continue
         num_vectors += 1
-        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[:, ofEvent[1], ofEvent[2] ])
+        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
         if  angular_error!= 181:
             angular_errors.append(angular_error)
-
-        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[:, ofEvent[1], ofEvent[2] ]) 
+        else:
+            zero_vectors +=1
+        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
         endpoint_errors.append(eep)
         if rel_eep != -1:
             relative_endpoint_errors.append(rel_eep)
         
     stats = "TranlationFlow statistics:\n"
-    stats += "Number of valid flow vectors: " + num_vectors +"\n"
-    pure_stats = ""+num_vectors+" "
+    stats += "Number of valid flow vectors: " + str(num_vectors) + " zero vectors: " + str(zero_vectors)+ "\n"
+    pure_stats = ""+str(num_vectors)+" "
     for name in ["average_angular", "average endpoint", "rel endpoint"]:
         if name == "average_angular":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), pa1, pa2, pa3)
+            per1, per2, per3 = pa1, pa2, pa3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), per1, per2, per3)
         elif name == "average endpoint":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), pe1, pe2, pe3)
+            per1, per2, per3 =  pe1, pe2, pe3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), per1, per2, per3)
         elif name == "rel endpoint":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), pre1, pre2, pre3)
+            per1, per2, per3 = pre1, pre2, pre3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
         else:
             print("Error not known statistic")
-        stats += name+ ": mean: "+mean+ " std: ", std, " p"+pa1+": "+p1+" p"+pa2+": "+p2+" p"+pa3+": "+p3+"\n"
-        pure_stats = mean +" "+ std + " " + p1 + " " + p2 + " " + p3 + "\n"
-
-    with open(filename+"disk", "w") as file:
+        stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
+                " p"+str(per2)+": "+str(p2)+" p"+str(per3)+": "+str(p3)+"\n"
+        pure_stats = str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
+                     str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
+    with open(filename+"_disk_stats", "w") as file:
         file.write(stats+pure_stats)
         file.close()
 
@@ -192,47 +214,56 @@ def evaluateTranlationFlow(arr, focalLength, Z, T_x, px_size, x_res, y_res, file
     endpoint_errors = []
     relative_endpoint_errors = []
     num_of_vec = arr.shape[0]
-    for ofEvent in arr:
-        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[:, ofEvent[1], ofEvent[2] ])
+    zero_vectors = 0
+    for ofEvent in tqdm(arr):
+        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
         if  angular_error!= 181:
             angular_errors.append(angular_error)
-
-        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[:, ofEvent[1], ofEvent[2] ]) 
+        else:
+            zero_vectors += 1
+        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ]) 
         endpoint_errors.append(eep)
         if rel_eep != -1:
             relative_endpoint_errors.append(rel_eep)
         
     stats = "TranlationFlow statistics:\n"
-    stats += "Number of valid flow vectors: " + num_of_vec +"\n"
-    pure_stats = ""+num_of_vec+" "
+    stats += "Number of valid flow vectors: " + str(num_of_vec) + " zero vectors: " + str(zero_vectors)+ "\n"
+    pure_stats = ""+str(num_of_vec)+" "
     for name in ["average_angular", "average endpoint", "rel endpoint"]:
         if name == "average_angular":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), pa1, pa2, pa3)
+            per1, per2, per3 = pa1, pa2, pa3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), per1, per2, per3)
         elif name == "average endpoint":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), pe1, pe2, pe3)
+            per1, per2, per3 =  pe1, pe2, pe3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), per1, per2, per3)
         elif name == "rel endpoint":
-            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), pre1, pre2, pre3)
+            per1, per2, per3 = pre1, pre2, pre3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
         else:
             print("Error not known statistic")
-        stats += name+ ": mean: "+mean+ " std: ", std, " p"+pa1+": "+p1+" p"+pa2+": "+p2+" p"+pa3+": "+p3+"\n"
-        pure_stats = mean +" "+ std + " " + p1 + " " + p2 + " " + p3 + "\n"
-
-    with open(filename+"translational", "w") as file:
+        stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
+                " p"+str(per2)+": "+str(p2)+" p"+str(per3)+": "+str(p3)+"\n"
+        pure_stats += str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
+                     str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
+    file_write_name = filename+"_transcart_stats.txt"
+    with open(file_write_name, "w") as file:
+        print("going to write file to:"+ file_write_name)
         file.write(stats+pure_stats)
+        print("filewritten")
         file.close()
 
 
 # path to file of OF-vectors
-path = "file.npy"
+path = "C:\\Users\dominik\Documents\KTH\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad\lucas_full_ofvec-2020-05-01T22-17-26+0200.npy"
+final_file_name = path[:-4] # path.split("\\")[-1][:-4]
 focallength = 0.008
 px_size = 1.5E-5
 Z = 0.3
 radius = 0.1
 T_x = 0.01
 rpm = 10
-x_res = 480
-y_res = 640
-final_file_name = "of method: kanade"
+x_res = 640
+y_res = 480
 
 #percentiles
 pa1, pa2, pa3 = 2.5, 5, 15
@@ -243,6 +274,7 @@ w_z = 2 * np.pi * rpm /60
 ofVecs = np.load(path, allow_pickle=True)
 
 #call the evaluation
-evaluateTranlationFlow(ofVecs, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+
+#evaluateTranlationFlow(ofVecs, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
 
 evaluateRotationalFlow(ofVecs, w_z, px_size, x_res, y_res, final_file_name, radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)

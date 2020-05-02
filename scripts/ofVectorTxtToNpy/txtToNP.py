@@ -74,9 +74,11 @@ def transformtxt(filename, newname):
             #returnArrays.append((name, events))
     #return returnArrays
     #saving
+    zero_flow_vec = nparray[nparray[:,7] == 0].shape[0]
     nparray = nparray[nparray[:,8] == 1][:,:8]
+    
     print('saving as ', newname)
-    np.save(newname, nparray)
+    np.save(newname[:-4]+ "zeroVec_"+str(zero_flow_vec)+".npy", nparray)
     print('saved')
 
 
