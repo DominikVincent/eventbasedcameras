@@ -60,7 +60,7 @@ if downsamping with factor 2 is used, double the pixel size.
 @param[in] T_x - the translating speed in m/s
 @param[in] x_res - resolution width
 @param[in] y_res - resolution height
-@param[out] motion_mat - 2 x X x Y matrix containing the motion vector at each pixel
+@param[out] motion_mat - X x Y x 2 matrix containing the motion vector at each pixel
 """
 def getTranslatingFlowMatrix(focalLength, Z, T_x, px_size, x_res, y_res):
     x_flow_ms = focalLength/Z * T_x
@@ -73,6 +73,48 @@ def getTranslatingFlowMatrix(focalLength, Z, T_x, px_size, x_res, y_res):
     print(motion_mat)
     return motion_mat
 
+"""
+returns the groundtruth matrix for the rotating bar synthetic scene given the path to the GT generated 
+by Matlab. 
+@param[in] vxGT_path - the path to the matrix for the x direction flow
+@param[in] vyGT_path - the path to the matrix for the y direction flow
+@param[out] the stacked yres x xres x 2 matrix
+"""
+def getRotatingBarFlowMatrix(vxGT_path, vyGT_path):
+    a = np.load(vxGT_path, allow_pickle=True)
+    b = np.load(vyGT_path, allow_pickle=True)
+
+    return np.stack((a,b), axis=2)
+
+"""
+returns the full flow groundtruth matrix for the translating square synthetic scene given the path to the GT generated 
+by Matlab. 
+@param[in] vxGT_path - the path to the matrix for the x direction flow
+@param[in] vyGT_path - the path to the matrix for the y direction flow
+@param[out] the stacked yres x xres x 2 matrix
+"""
+def getTranslatingSquareFullFlowMatrix(vxGT_path, vyGT_path):
+    a = np.load(vxGT_path, allow_pickle=True)
+    b = np.load(vyGT_path, allow_pickle=True)
+
+    a = a[a!= 0][0]
+    b = b[b!= 0][0]
+
+    c = np.full((a.shape[0], a.shape[1], 2), [a,b])
+
+    return c
+
+"""
+returns the normal flow groundtruth matrix for the translating square synthetic scene given the path to the GT generated 
+by Matlab. 
+@param[in] vxGT_path - the path to the matrix for the x direction flow
+@param[in] vyGT_path - the path to the matrix for the y direction flow
+@param[out] the stacked yres x xres x 2 matrix
+"""
+def getTranslatingSquareNormalFlowMatrix(vxGT_path, vyGT_path):
+    a = np.load(vxGT_path, allow_pickle=True)
+    b = np.load(vyGT_path, allow_pickle=True)
+    return np.stack((a,b), axis=2)
 
 """
 computes statistics for a error and additional the percentail measurements
@@ -127,6 +169,7 @@ def calc_endpoint_error(vec1, vec2):
         rel_eep = eep/np.linalg.norm(vec2)
     
     return eep, rel_eep
+
 
 
 
@@ -246,6 +289,182 @@ def evaluateTranlationFlow(arr, focalLength, Z, T_x, px_size, x_res, y_res, file
         pure_stats += str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
                      str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
     file_write_name = filename+"_transcart_stats.txt"
+    with open(file_write_name, "w") as file:
+        print("going to write file to:"+ file_write_name)
+        file.write(stats+pure_stats)
+        print("filewritten")
+        file.close()
+
+
+"""
+gets an array of optical flow vectors including their position and saves statistics as a file
+@param[in] arr the array of flow vectors - normalized so that it the position ranges from (0,0) till (xres,yres)
+@param[in] x resolution
+@param[in] y resolution
+@param[in] filename - the filename
+@param[in] p* - the percentile values for angular, endpoint and relative enpoint error
+"""
+def evaluateRotatingBarFlow(arr, vxGT_path, vyGT_path, filename, \
+                            pa1, pa2, pa3, \
+                            pe1, pe2, pe3, \
+                            pre1, pre2, pre3):
+
+    flow_mat = getRotatingBarFlowMatrix(vxGT_path, vyGT_path)
+    angular_errors = []
+    endpoint_errors = []
+    relative_endpoint_errors = []
+    num_of_vec = arr.shape[0]
+    zero_vectors = 0
+    for ofEvent in tqdm(arr):
+        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
+        if  angular_error!= 181:
+            angular_errors.append(angular_error)
+        else:
+            zero_vectors += 1
+        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ]) 
+        endpoint_errors.append(eep)
+        if rel_eep != -1:
+            relative_endpoint_errors.append(rel_eep)
+        
+    stats = "TranlationFlow statistics:\n"
+    stats += "Number of valid flow vectors: " + str(num_of_vec) + " zero vectors: " + str(zero_vectors)+ "\n"
+    pure_stats = ""+str(num_of_vec)+" "
+    for name in ["average_angular", "average endpoint", "rel endpoint"]:
+        if name == "average_angular":
+            per1, per2, per3 = pa1, pa2, pa3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), per1, per2, per3)
+        elif name == "average endpoint":
+            per1, per2, per3 =  pe1, pe2, pe3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), per1, per2, per3)
+        elif name == "rel endpoint":
+            per1, per2, per3 = pre1, pre2, pre3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
+        else:
+            print("Error not known statistic")
+        stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
+                " p"+str(per2)+": "+str(p2)+" p"+str(per3)+": "+str(p3)+"\n"
+        pure_stats += str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
+                     str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
+    file_write_name = filename+"_rotating_bar_stats.txt"
+    with open(file_write_name, "w") as file:
+        print("going to write file to:"+ file_write_name)
+        file.write(stats+pure_stats)
+        print("filewritten")
+        file.close()
+
+
+"""
+gets an array of optical flow vectors including their position and saves statistics as a file
+@param[in] arr the array of flow vectors - normalized so that it the position ranges from (0,0) till (xres,yres)
+@param[in] x resolution
+@param[in] y resolution
+@param[in] filename - the filename
+@param[in] p* - the percentile values for angular, endpoint and relative enpoint error
+"""
+def evaluateTranslatingSquareFullFlow(arr, vxGT_path, vyGT_path, filename, \
+                            pa1, pa2, pa3, \
+                            pe1, pe2, pe3, \
+                            pre1, pre2, pre3):
+
+    flow_mat = getTranslatingSquareFullFlowMatrix(vxGT_path, vyGT_path)
+    angular_errors = []
+    endpoint_errors = []
+    relative_endpoint_errors = []
+    num_of_vec = arr.shape[0]
+    zero_vectors = 0
+    for ofEvent in tqdm(arr):
+        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
+        if  angular_error!= 181:
+            angular_errors.append(angular_error)
+        else:
+            zero_vectors += 1
+        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ]) 
+        endpoint_errors.append(eep)
+        if rel_eep != -1:
+            relative_endpoint_errors.append(rel_eep)
+    stats = "TranlationFlow statistics:\n"
+    stats += "Number of valid flow vectors: " + str(num_of_vec) + " zero vectors: " + str(zero_vectors)+ "\n"
+    pure_stats = ""+str(num_of_vec)+" "
+    for name in ["average_angular", "average endpoint", "rel endpoint"]:
+        if name == "average_angular":
+            per1, per2, per3 = pa1, pa2, pa3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), per1, per2, per3)
+        elif name == "average endpoint":
+            per1, per2, per3 =  pe1, pe2, pe3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), per1, per2, per3)
+        elif name == "rel endpoint":
+            per1, per2, per3 = pre1, pre2, pre3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
+        else:
+            print("Error not known statistic")
+        stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
+                " p"+str(per2)+": "+str(p2)+" p"+str(per3)+": "+str(p3)+"\n"
+        pure_stats += str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
+                     str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
+    
+    file_write_name = filename+"_translating_square_full_stats.txt"
+    with open(file_write_name, "w") as file:
+        print("going to write file to:"+ file_write_name)
+        file.write(stats+pure_stats)
+        print("filewritten")
+        file.close()
+
+
+
+"""
+gets an array of optical flow vectors including their position and saves statistics as a file
+@param[in] arr the array of flow vectors - normalized so that it the position ranges from (0,0) till (xres,yres)
+@param[in] x resolution
+@param[in] y resolution
+@param[in] filename - the filename
+@param[in] p* - the percentile values for angular, endpoint and relative enpoint error
+"""
+def evaluateTranslatingSquareNormalFlow(arr, vxGT_path, vyGT_path, filename, \
+                            pa1, pa2, pa3, \
+                            pe1, pe2, pe3, \
+                            pre1, pre2, pre3):
+
+    flow_mat = getTranslatingSquareNormalFlowMatrix(vxGT_path, vyGT_path)
+    angular_errors = []
+    endpoint_errors = []
+    relative_endpoint_errors = []
+    num_of_vec = arr.shape[0]
+    zero_vectors = 0
+    ts_last = arr[0,1]
+    for ofEvent in tqdm(arr):
+        if ofEvent[1] > ts_last:
+            flow_mat = np.roll(flow_mat, (-1,1), axis=(0,1))
+            ts_last = ofEvent[1]
+        angular_error = calc_angular_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ])
+        if  angular_error!= 181:
+            angular_errors.append(angular_error)
+        else:
+            zero_vectors += 1
+        eep, rel_eep = calc_endpoint_error(ofEvent[5:7], flow_mat[int(ofEvent[3]), int(ofEvent[2]), : ]) 
+        endpoint_errors.append(eep)
+        if rel_eep != -1:
+            relative_endpoint_errors.append(rel_eep)
+    stats = "TranlationFlow statistics:\n"
+    stats += "Number of valid flow vectors: " + str(num_of_vec) + " zero vectors: " + str(zero_vectors)+ "\n"
+    pure_stats = ""+str(num_of_vec)+" "
+    for name in ["average_angular", "average endpoint", "rel endpoint"]:
+        if name == "average_angular":
+            per1, per2, per3 = pa1, pa2, pa3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(angular_errors), per1, per2, per3)
+        elif name == "average endpoint":
+            per1, per2, per3 =  pe1, pe2, pe3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(endpoint_errors), per1, per2, per3)
+        elif name == "rel endpoint":
+            per1, per2, per3 = pre1, pre2, pre3
+            mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
+        else:
+            print("Error not known statistic")
+        stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
+                " p"+str(per2)+": "+str(p2)+" p"+str(per3)+": "+str(p3)+"\n"
+        pure_stats += str(mean) +" "+ str(std) + " " + str(per1) + " " + str(p1) + " " +\
+                     str(per2) +  " " + str(p2) + " "  + str(per3) + " " + str(p3) + "\n"
+    
+    file_write_name = filename+"_translating_square_full_stats.txt"
     with open(file_write_name, "w") as file:
         print("going to write file to:"+ file_write_name)
         file.write(stats+pure_stats)
