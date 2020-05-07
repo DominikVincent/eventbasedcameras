@@ -447,31 +447,31 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
     zero_vectors = 0
     ts_last = arr[0,1]
     tmpMat = np.zeros((y_res, x_res))
-    rotate_by = int( ((ts_last // (25000*downsampling))//downsampling) +1 )
+    rotate_by = int( ((ts_last // 25000) - 1) // downsampling )
     flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
     for ofEvent in tqdm(arr):
         if ofEvent[1] > ts_last+1000:
-            plt.subplot(3,1,1)
-            plt.imshow(tmpMat)
-            plt.subplot(3,1,2)
-            plt.imshow(np.sum(flow_mat, axis=2))
-            plt.subplot(3,1,3)
-            plt.imshow(np.sum(flow_mat, axis=2)*tmpMat)
+            # plt.subplot(3,1,1)
+            # plt.imshow(tmpMat)
+            # plt.subplot(3,1,2)
+            # plt.imshow(np.sum(flow_mat, axis=2))
+            # plt.subplot(3,1,3)
+            # plt.imshow(np.sum(flow_mat, axis=2)*tmpMat)
             
-            debug_mat = flow_mat.sum(axis=2)
-            debug_ind = np.where(debug_mat != 0)
-            debug_ind = np.stack((debug_ind[0], debug_ind[1]), axis=1)
+            # # debug_mat = flow_mat.sum(axis=2)
+            # # debug_ind = np.where(debug_mat != 0)
+            # # debug_ind = np.stack((debug_ind[0], debug_ind[1]), axis=1)
 
-            debug_mat_tmp = tmpMat
-            debug_ind_tmp = np.where(debug_mat_tmp != 0)
-            debug_ind_tmp = np.stack((debug_ind_tmp[0], debug_ind_tmp[1]), axis=1)
+            # # debug_mat_tmp = tmpMat
+            # # debug_ind_tmp = np.where(debug_mat_tmp != 0)
+            # # debug_ind_tmp = np.stack((debug_ind_tmp[0], debug_ind_tmp[1]), axis=1)
 
-            print(debug_ind_tmp)
-            print(debug_ind)
-            plt.show()
+            # # print(debug_ind_tmp)
+            # # print(debug_ind)
+            # plt.show()
 
             tmpMat = np.zeros((y_res, x_res))
-            rotate_by = int( ((ofEvent[1] // (25000*downsampling))//downsampling) +1 )
+            rotate_by = int( ((ofEvent[1] // 25000) - 1) // downsampling )
             flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
             ts_last = ofEvent[1]
         else:
@@ -521,7 +521,7 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
 
 
 
-def transform_all_subdirs(startpath):
+def transform_all_subdirs(startpath, px_size):
     workbook = xlsxwriter.Workbook(os.path.join(startpath, "stats.xlsx"))
     worksheet = workbook.add_worksheet()
     # write header
@@ -558,7 +558,7 @@ def transform_all_subdirs(startpath):
                             else:
                                 vGT_name = "vGT_down.npy"
                                 vGT_path = os.path.join(base_path, vGT_name)
-                                
+
                         ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
                         if "roatatingBar" in root:
                             pass
@@ -567,7 +567,7 @@ def transform_all_subdirs(startpath):
                         elif "rotatingDisk" in root:
                             stats = evaluateRotationalFlow(ofVectors, w_z, px_size, x_res, y_res, os.path.join(root, file[:-4]), radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                         elif "translatingSquare" in root:
-                            stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                            # stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), x_res, y_res, downsampling, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                             stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                         else:
                             print("Error: no methods apply")
@@ -593,7 +593,7 @@ def transform_all_subdirs(startpath):
 
 
 # path to file of OF-vectors
-base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryEvent"
+base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryIRow"
 
 
 focallength = 0.008
@@ -602,10 +602,10 @@ Z = 0.3
 radius = 0.1
 T_x = 0.01
 rpm = 10
-x_full_res = 320
-y_full_res = 240
-x_down_res = 640
-y_down_res = 480
+x_full_res = 640
+y_full_res = 480
+x_down_res = 320
+y_down_res = 240
 
 
 #percentiles
@@ -615,7 +615,7 @@ pre1, pre2, pre3 = 0.1, 0.3, 0.6
 
 w_z = 2 * np.pi * rpm /60
 
-transform_all_subdirs(base_path)
+transform_all_subdirs(base_path, px_size)
 
 #call the evaluation
 
