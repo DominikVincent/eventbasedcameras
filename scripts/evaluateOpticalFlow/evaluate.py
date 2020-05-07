@@ -214,7 +214,7 @@ def evaluateRotationalFlow(arr, w_z, px_size, x_res, y_res, filename, \
     stats = "TranlationFlow statistics:\n"
     stats += "Number of valid flow vectors: " + str(num_vectors) + " zero vectors: " + str(zero_vectors)+ "\n"
     pure_stats = ""+str(num_vectors)+" "
-    stats_list = [num_of_vec, zero_vectors]
+    stats_list = [num_vectors, zero_vectors]
 
     for name in ["average_angular", "average endpoint", "rel endpoint"]:
         if name == "average_angular":
@@ -434,6 +434,7 @@ gets an array of optical flow vectors including their position and saves statist
 @param[in] p* - the percentile values for angular, endpoint and relative enpoint error
 """
 def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
+                            x_res, y_res, downsampling, \
                             pa1, pa2, pa3, \
                             pe1, pe2, pe3, \
                             pre1, pre2, pre3):
@@ -446,7 +447,7 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
     zero_vectors = 0
     ts_last = arr[0,1]
     tmpMat = np.zeros((y_res, x_res))
-    rotate_by = int( ((ts_last // (25000*downampling))//downampling) +1 )
+    rotate_by = int( ((ts_last // (25000*downsampling))//downsampling) +1 )
     flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
     for ofEvent in tqdm(arr):
         if ofEvent[1] > ts_last+1000:
@@ -470,7 +471,7 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
             plt.show()
 
             tmpMat = np.zeros((y_res, x_res))
-            rotate_by = int( ((ofEvent[1] // (25000*downampling))//downampling) +1 )
+            rotate_by = int( ((ofEvent[1] // (25000*downsampling))//downsampling) +1 )
             flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
             ts_last = ofEvent[1]
         else:
@@ -538,31 +539,38 @@ def transform_all_subdirs(startpath):
                     file_split = file[:-4].split("_")
                     name_of_method = file_split[0] + "_" + file_split[1]
                     zero_vectors = int( file_split[file_split.index("zeroVec") + 1] )
-                    if "full" in file:
-                        
+                    if "full" in file or "all" in file or "everyI" in file or "window" in file:
+                        if "full" in file:
+                            x_res = x_full_res
+                            y_res = y_full_res
+                            px_size = px_size
+                            downsampling = 1
+                        else:
+                            x_res = x_down_res
+                            y_res = y_down_res
+                            px_size = px_size * 2
+                            downsampling = 2
+
+                        if "translatingSquare" in root or "rotatingDisk" in file:
+                            if "full" in file: 
+                                vGT_name = "vGT.npy"
+                                vGT_path = os.path.join(base_path, vGT_name)
+                            else:
+                                vGT_name = "vGT_down.npy"
+                                vGT_path = os.path.join(base_path, vGT_name)
+                                
                         ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
-                        stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        #stats = evaluateRotationalFlow(ofVecs, w_z, px_size, x_res, y_res, final_file_name, radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        # stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        # stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        
-                    elif "all" in file:
-                        ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
-                        #stats = evaluateTranlationFlow(ofVecs, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        #stats = evaluateRotationalFlow(ofVecs, w_z, px_size, x_res, y_res, final_file_name, radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-
-                        # stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        # pass
-                    elif "everyI" in file:
-                        pass
-                    elif "window" in file:
-                        pass
+                        if "roatatingBar" in root:
+                            pass
+                        elif "translatingCart" in root:
+                            stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        elif "rotatingDisk" in root:
+                            stats = evaluateRotationalFlow(ofVectors, w_z, px_size, x_res, y_res, os.path.join(root, file[:-4]), radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        elif "translatingSquare" in root:
+                            stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                            stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        else:
+                            print("Error: no methods apply")
                     else:
                         print("file:", file, " is unknown")
                     
@@ -586,8 +594,7 @@ def transform_all_subdirs(startpath):
 
 # path to file of OF-vectors
 base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryEvent"
-vGT_name = "vGT_down.npy"
-vGT_path = os.path.join(base_path, vGT_name)
+
 
 focallength = 0.008
 px_size = 1.5E-5
@@ -595,10 +602,12 @@ Z = 0.3
 radius = 0.1
 T_x = 0.01
 rpm = 10
-x_res = 320
-y_res = 240
-# 1 if no, 2 if yes 
-downampling = 2
+x_full_res = 320
+y_full_res = 240
+x_down_res = 640
+y_down_res = 480
+
+
 #percentiles
 pa1, pa2, pa3 = 2.5, 10, 30
 pe1, pe2, pe3 = 1, 7.5, 20
