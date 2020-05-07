@@ -78,7 +78,7 @@ def transformtxt(filename, newname):
     nparray = nparray[nparray[:,8] == 1][:,:8]
     
     print('saving as ', newname)
-    np.save(newname[:-4]+ "zeroVec_"+str(zero_flow_vec)+".npy", nparray)
+    np.save(newname[:-4]+ "_zeroVec_"+str(zero_flow_vec)+".npy", nparray)
     print('saved')
 
 
@@ -86,10 +86,10 @@ def transformtxt(filename, newname):
 def transformAllSubdirs(startpath):
     for root, dirs, files in os.walk(startpath, topdown=False):
         for file in files:
-            if file.endswith(".txt") and "ofvec" in file:
+            if file.endswith(".txt") and "ofvec" in file and not "stats" in file:
                 transformtxt(os.path.join(root, file), os.path.join(root, file[:-4] + ".npy"))
 #for current dir
 #startpath = getcwd()
 #
-path = "C:\\Users\dominik\Documents\KTH\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad"
+path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryEvent"
 transformAllSubdirs(path)

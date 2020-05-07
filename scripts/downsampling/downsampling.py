@@ -2,7 +2,7 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import os
-
+import time
 def drawimg(events):
     img = np.zeros((480,640))
     k = 0
@@ -25,11 +25,21 @@ takes every xth and yth row
 @param[out] the events matching the rows and colums
 """
 def everyIRow(events, x, y):
-    events_rows = np.where( (events[:,1] % x == 0) & (events[:,2] % y == 0))
+    events_rows = np.where( (events[:,0] % x == 0) & (events[:,1] % y == 0))
     events = events[events_rows]
-    events[:,0] =events[:,0]/x
-    events[:,1] =events[:,1]/y
+    events[:,0] = events[:,0]/x
+    events[:,1] = events[:,1]/y
     return events
+
+"""
+takes a ysize x xsize x 2 gt matrix and downscales it by scale
+"""
+def downscaleOF(events, x_scale, y_scale):
+    events_dsample = events[::y_scale, ::x_scale, :]
+
+    events_dsample[:,:,0] = events_dsample[:,:,0]/x_scale
+    events_dsample[:,:,1] = events_dsample[:,:,1]/y_scale
+    return events_dsample
 
 """
 downscales by x and y without disarding anything
@@ -43,6 +53,8 @@ def everyEvent(events, x, y):
     events[:, 0] = events[:, 0]/x
     events[:, 1] = events[:, 1]/y
     return events.astype(np.int32)
+
+
 """
 returns a downscaled image by factor x_scale, y_scale. Events are taken if num_of_pixels of their neighbours are active during 
 the time window
@@ -63,7 +75,7 @@ def downscaleTimeWindow(events, x_res, y_res, x_scale, y_scale, time_window, num
     for j in tqdm(range(1, events.shape[0])):
         #print(j)
         event = events[j]
-        print(len(queue))
+        #print(len(queue))
         
         queue.append(event)
         while not queue and queue[0][2] < (event[2] - time_window):
@@ -240,18 +252,31 @@ def numOfOnNeighbours(y, x, bitimage):
 def downsampledInAllSubdirs(startpath, fileending, sample_type, x_scale, y_scale, time_window = 20, num_of_pixels = 3):
     for root, dirs, files in os.walk(startpath, topdown=False):
         for file in files:
-            if file.endswith(fileending) and not "down" in file:
+            if file.endswith(fileending) and file=="events.npy":
                 events = np.load(os.path.join(root, file), allow_pickle = True)
-                if sample_type == "all":
-                    newEvents = everyEvent(events, x_scale,y_scale)
-                elif sample_type == "every_i":
-                    newEvents = everyIRow(events, x_scale,y_scale)
-                elif sample_type == "complex":
-                    newEvents = downscaleTimeWindow(events, 640, 480, x_scale, y_scale, time_window, num_of_pixels)
-                else:
-                    print("not known type - skipping")
-                    continue
+                np.save(os.path.join(root, file), events, fix_imports=True)
+
+                sample_type = "all"
+                newEvents = everyEvent(events, x_scale,y_scale)
+                np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents, fix_imports=True)
+                
+                sample_type = "every_i"
+                events = np.load(os.path.join(root, file), allow_pickle = True)
+                newEvents = everyIRow(events, x_scale,y_scale)
                 np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents)
+
+                # sample_type == "complex"
+                # newEvents = downscaleTimeWindow(events, 640, 480, x_scale, y_scale, time_window, num_of_pixels)
+                # np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents)
+
+            elif file == "vxGT.npy" or file == "vyGT.npy":
+                vxGT = np.load(os.path.join(root, "vxGT.npy"), allow_pickle = True)
+                vyGT = np.load(os.path.join(root, "vyGT.npy"), allow_pickle = True)
+                vGT = np.stack((vxGT, vyGT), axis=2)
+                np.save(os.path.join(root, "vGT.npy"), vGT)
+
+                downGT = downscaleOF(vGT, x_scale, y_scale)
+                np.save(os.path.join(root, "vGT_down.npy"), downGT)
 
 # eventsArray = np.load("downsampling/test.npy", allow_pickle=True)
 # print(eventsArray.shape)
@@ -264,7 +289,7 @@ def downsampledInAllSubdirs(startpath, fileending, sample_type, x_scale, y_scale
 
 
 # np.save("downsampling/downsampled.npy", newEvents)
-path = "C:\\Users\dominik\Documents\KTH\P3\degreeProject\eventbasedcameras\cameraRecordings\dropTest\DVS640\mousepad"
+path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\test"
 sample_type = "every_i" # "ever_i" "complex" "all"
 x_scale = 2
 y_scale = 2
