@@ -68,7 +68,7 @@ the time window
 @param[in] number of neighbours number of neighbouring pixels that have to be active
 @param[out] the events downscaled
 """
-def downscaleTimeWindow(events, x_res, y_res, x_scale, y_scale, time_window, num_of_pixel=3):
+def downscaleTimeWindow(events, x_res, y_res, x_scale, y_scale, time_window, num_of_pixel=2):
     queue = [events[0]]
     newEvents = np.zeros_like(events)
     k = 0

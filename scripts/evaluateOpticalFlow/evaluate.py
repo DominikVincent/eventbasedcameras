@@ -541,11 +541,11 @@ def transform_all_subdirs(startpath):
                     if "full" in file:
                         
                         ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
-                        #stats = evaluateTranlationFlow(ofVecs, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, final_file_name, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
 
                         #stats = evaluateRotationalFlow(ofVecs, w_z, px_size, x_res, y_res, final_file_name, radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
 
-                        stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        # stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
 
                         # stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                         
