@@ -80,11 +80,10 @@ by Matlab.
 @param[in] vyGT_path - the path to the matrix for the y direction flow
 @param[out] the stacked yres x xres x 2 matrix
 """
-def getRotatingBarFlowMatrix(vxGT_path, vyGT_path):
-    a = np.load(vxGT_path, allow_pickle=True)
-    b = np.load(vyGT_path, allow_pickle=True)
-
-    return np.stack((a,b), axis=2)
+def getRotatingBarFlowMatrix(vGT_path):
+    a = np.load(vGT_path, allow_pickle=True)
+    print(a.shape)
+    return a
 
 """
 returns the full flow groundtruth matrix for the translating square synthetic scene given the path to the GT generated 
@@ -311,12 +310,12 @@ gets an array of optical flow vectors including their position and saves statist
 @param[in] filename - the filename
 @param[in] p* - the percentile values for angular, endpoint and relative enpoint error
 """
-def evaluateRotatingBarFlow(arr, vxGT_path, vyGT_path, filename, \
+def evaluateRotatingBarFlow(arr, vGT_path, filename, \
                             pa1, pa2, pa3, \
                             pe1, pe2, pe3, \
                             pre1, pre2, pre3):
 
-    flow_mat = getRotatingBarFlowMatrix(vxGT_path, vyGT_path)
+    flow_mat = getRotatingBarFlowMatrix(vGT_path)
     angular_errors = []
     endpoint_errors = []
     relative_endpoint_errors = []
@@ -408,6 +407,8 @@ def evaluateTranslatingSquareFullFlow(arr, vGT_path, filename, \
         elif name == "rel endpoint":
             per1, per2, per3 = pre1, pre2, pre3
             mean, std, p1, p2, p3 = compute_statistics(np.array(relative_endpoint_errors), per1, per2, per3)
+            mean = mean*100
+            std = std*100
         else:
             print("Error not known statistic")
         stats += name+ ": mean: "+str(mean)+ " std: "+ str(std)+ " p"+str(per1)+": "+str(p1)+\
@@ -472,7 +473,18 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
 
             tmpMat = np.zeros((y_res, x_res))
             rotate_by = int( ((ofEvent[1] // 25000) - 1) // downsampling )
-            flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
+
+            roll_m1 = np.roll(flow_mat_orig, (rotate_by-1,rotate_by-1), axis=(0,1))
+            roll    = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
+            roll_p1 = np.roll(flow_mat_orig, (rotate_by+1,rotate_by+1), axis=(0,1))
+            
+            con = roll.sum(axis=2) == 0 
+            con = np.stack((con, con), axis =2 )
+            roll_m1 = roll_m1 * con
+            roll_p1 = roll_p1 * con
+            flow_mat = roll_m1 + roll + roll_p1
+            # flow_mat = np.add(sum_1, roll_p1, where = con)
+            #flow_mat = np.roll(flow_mat_orig, (rotate_by,rotate_by), axis=(0,1))
             ts_last = ofEvent[1]
         else:
             tmpMat[int(ofEvent[3]), int(ofEvent[2])] += 1
@@ -551,7 +563,7 @@ def transform_all_subdirs(startpath, px_size):
                             px_size = px_size * 2
                             downsampling = 2
 
-                        if "translatingSquare" in root or "rotatingDisk" in file:
+                        if "translatingSquare" in root or "rotatingBar" in root:
                             if "full" in file: 
                                 vGT_name = "vGT.npy"
                                 vGT_path = os.path.join(base_path, vGT_name)
@@ -560,8 +572,8 @@ def transform_all_subdirs(startpath, px_size):
                                 vGT_path = os.path.join(base_path, vGT_name)
 
                         ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
-                        if "roatatingBar" in root:
-                            pass
+                        if "rotatingBar" in root:
+                            stats = evaluateRotatingBarFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                         elif "translatingCart" in root:
                             stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                         elif "rotatingDisk" in root:
@@ -593,7 +605,7 @@ def transform_all_subdirs(startpath, px_size):
 
 
 # path to file of OF-vectors
-base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryIRow"
+base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\rotatingBar\\downTimeWindow"
 
 
 focallength = 0.008

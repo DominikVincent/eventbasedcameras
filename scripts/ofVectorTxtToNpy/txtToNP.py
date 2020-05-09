@@ -91,5 +91,5 @@ def transformAllSubdirs(startpath):
 #for current dir
 #startpath = getcwd()
 #
-path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryIRow"
+path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\rotatingBar\\downTimeWindow"
 transformAllSubdirs(path)

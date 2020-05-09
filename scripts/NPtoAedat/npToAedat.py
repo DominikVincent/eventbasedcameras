@@ -256,7 +256,7 @@ def drawing(events, start, window = 1000):
 # print("length: ", 1.0*arr[-1,2]-arr[0,2])
 # print("start: ", arr[0,2], " last: ", arr[-10:,2])
 
-path = "C:\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downTimeWindow"
+path = "C:\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\rotatingBar"
 # path = os.path.normpath(path)
 path = unicode(path, 'utf-8')
 transform_all_subdirs(path)
