@@ -100,7 +100,7 @@ def downscaleTimeWindow(events, x_res, y_res, x_scale, y_scale, time_window, num
             remove_event = events[queue_start]
             queue_start += 1
             active_events[remove_event[1], remove_event[0], remove_event[3]] = 0
-
+        # print(j-queue_start)
         # while not not queue and queue[0][2] < (ts - time_window):
         #     remove_event = queue.pop(0)
         #     queue_start += 1
@@ -158,23 +158,26 @@ def numOfOnNeighbours(y, x, bitimage):
     y_max = min(bitimage.shape[0], y+2)
 
     x_low = max(0, x-1)
-    x_max = min(bitimage.shape[0], x+2)
+    x_max = min(bitimage.shape[1], x+2)
+    # print(bitimage[y_low:y_max, x_low:x_max])
 
+    #print(np.sum(bitimage[y_low:y_max, x_low:x_max]))
     return np.sum(bitimage[y_low:y_max, x_low:x_max])
 
 
 
-def downsampledInAllSubdirs(startpath, fileending, x_scale, y_scale, time_window = 20, num_of_pixels = 3):
+def downsampledInAllSubdirs(startpath, fileending, x_scale, y_scale, time_window = 3000, num_of_pixels = 3):
     for root, dirs, files in os.walk(startpath, topdown=False):
         for file in files:
             if file.endswith(fileending) and file[:6]=="events" and not "down" in file:
                 print(file)
                 events = np.load(os.path.join(root, file), allow_pickle = True)
+                events = events[:2000000]
                 np.save(os.path.join(root, file), events, fix_imports=True)
 
-                sample_type = "all"
-                newEvents = everyEvent(events, x_scale,y_scale)
-                np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents, fix_imports=True)
+                # sample_type = "all"
+                # newEvents = everyEvent(events, x_scale,y_scale)
+                # np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents, fix_imports=True)
                 
                 sample_type = "every_i"
                 events = np.load(os.path.join(root, file), allow_pickle = True)
@@ -183,7 +186,7 @@ def downsampledInAllSubdirs(startpath, fileending, x_scale, y_scale, time_window
 
                 sample_type = "complex"
                 newEvents = downscaleTimeWindow(events, 640, 480, x_scale, y_scale, time_window, num_of_pixels)
-                np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+".npy"), newEvents)
+                np.save(os.path.join(root, file[:-4]+"_down_"+sample_type+"_"+str(time_window)+"_"+str(num_of_pixels)+".npy"), newEvents)
 
             elif file == "vxGT.npy" or file == "vyGT.npy":
                 vxGT = np.load(os.path.join(root, "vxGT.npy"), allow_pickle = True)
@@ -205,7 +208,7 @@ def downsampledInAllSubdirs(startpath, fileending, x_scale, y_scale, time_window
 
 
 # np.save("downsampling/downsampled.npy", newEvents)
-path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\rotatingBar\\tmp"
+path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\test\\close"
 #sample_type = "every_i" # "ever_i" "complex" "all"
 x_scale = 2
 y_scale = 2
