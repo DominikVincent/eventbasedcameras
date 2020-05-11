@@ -129,9 +129,9 @@ def compute_statistics(errors, pa1, pa2, pa3):
     mean = np.mean(errors)
     std  = np.std(errors)
 
-    cpa1 = np.where(errors < pa1)[0].shape[0] / errors.shape[0]
-    cpa2 = np.where(errors < pa2)[0].shape[0] / errors.shape[0]
-    cpa3 = np.where(errors < pa3)[0].shape[0] / errors.shape[0]
+    cpa1 = np.where(errors < pa1)[0].shape[0] / errors.shape[0] * 100
+    cpa2 = np.where(errors < pa2)[0].shape[0] / errors.shape[0] * 100
+    cpa3 = np.where(errors < pa3)[0].shape[0] / errors.shape[0] * 100
 
     return mean, std, cpa1, cpa2, cpa3
 
@@ -562,6 +562,9 @@ def transform_all_subdirs(startpath, px_size):
                             y_res = y_down_res
                             px_size = px_size * 2
                             downsampling = 2
+                            pe1 /= 2
+                            pe2 /= 2
+                            pe3 /= 2
 
                         if "translatingSquare" in root or "rotatingBar" in root:
                             if "full" in file: 
@@ -605,7 +608,7 @@ def transform_all_subdirs(startpath, px_size):
 
 
 # path to file of OF-vectors
-base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\rotatingBar\\downTimeWindow"
+base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryEvent"
 
 
 focallength = 0.008
