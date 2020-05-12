@@ -551,7 +551,7 @@ def transform_all_subdirs(startpath, px_size):
                     file_split = file[:-4].split("_")
                     name_of_method = file_split[0] + "_" + file_split[1]
                     zero_vectors = int( file_split[file_split.index("zeroVec") + 1] )
-                    if "full" in file or "all" in file or "everyI" in file or "window" in file:
+                    if "full" in file or "all" in file or "everyI" in file or "everyi" in file or "complex" in file or "window" in file:
                         if "full" in file:
                             x_res = x_full_res
                             y_res = y_full_res
@@ -562,9 +562,6 @@ def transform_all_subdirs(startpath, px_size):
                             y_res = y_down_res
                             px_size = px_size * 2
                             downsampling = 2
-                            pe1 /= 2
-                            pe2 /= 2
-                            pe3 /= 2
 
                         if "translatingSquare" in root or "rotatingBar" in root:
                             if "full" in file: 
