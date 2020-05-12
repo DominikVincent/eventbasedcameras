@@ -533,18 +533,19 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
 
 
 
-def transform_all_subdirs(startpath, px_size):
+def transform_all_subdirs(startpath, px_size, pe):
     workbook = xlsxwriter.Workbook(os.path.join(startpath, "stats.xlsx"))
     worksheet = workbook.add_worksheet()
     # write header
     first_line = ["Full", "", "", "angular error", "", "", "","","endpoint error", "", "", "","","rel endpoint", "", "", "","",]
     second_line = ["Name", "Number of OF-Vectors", "ZeroVectors", "mean", "std", "p2.5", "p10", "p30", "mean", "std", "p1", "p7.5", "p20", "mean", "std", "p0.1", "p0.3", "p0.6"]
-    
+    peOrig1, peOrig2, peOrig3 = pe
     for i in range(len(first_line)):
         worksheet.write_string(0, i, first_line[i])
         worksheet.write_string(1, i, second_line[i])
     all_stats = []
     for root, dirs, files in os.walk(startpath, topdown=False):
+        
             for file in files:
                 if file.endswith(".npy") and "ofvec" in file:
                     print("File is:", file)
@@ -552,16 +553,25 @@ def transform_all_subdirs(startpath, px_size):
                     name_of_method = file_split[0] + "_" + file_split[1]
                     zero_vectors = int( file_split[file_split.index("zeroVec") + 1] )
                     if "full" in file or "all" in file or "everyI" in file or "everyi" in file or "complex" in file or "window" in file:
+                        
                         if "full" in file:
                             x_res = x_full_res
                             y_res = y_full_res
                             px_size = px_size
                             downsampling = 1
+                            
+                            pe1 = peOrig1 *2
+                            pe2 = peOrig2 *2
+                            pe3 = peOrig3 *2
                         else:
                             x_res = x_down_res
                             y_res = y_down_res
                             px_size = px_size * 2
                             downsampling = 2
+
+                            pe1 = peOrig1
+                            pe2 = peOrig2
+                            pe3 = peOrig3
 
                         if "translatingSquare" in root or "rotatingBar" in root:
                             if "full" in file: 
@@ -623,11 +633,12 @@ y_down_res = 240
 #percentiles
 pa1, pa2, pa3 = 2.5, 10, 30
 pe1, pe2, pe3 = 1, 7.5, 20
+pe = [pe1, pe2, pe3]
 pre1, pre2, pre3 = 0.1, 0.3, 0.6
 
 w_z = 2 * np.pi * rpm /60
 
-transform_all_subdirs(base_path, px_size)
+transform_all_subdirs(base_path, px_size, pe)
 
 #call the evaluation
 
