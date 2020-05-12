@@ -46,8 +46,8 @@ def getRotationalMatrix(w_z, px_size, x_res, y_res):
 
             flow_mat[y + y_res // 2, x + x_res // 2, 0] = x_flow
             flow_mat[y + y_res // 2, x + x_res // 2, 1] = y_flow
-    for i in range(640):
-        print(flow_mat[240, i, :])
+    # for i in range(640):
+    #     print(flow_mat[240, i, :])
     # print(flow_mat[240,:,:])
     return flow_mat
 
@@ -69,8 +69,8 @@ def getTranslatingFlowMatrix(focalLength, Z, T_x, px_size, x_res, y_res):
     y = np.zeros_like(x)
 
     motion_mat = np.stack((x,y), axis=2)
-    print(motion_mat.shape)
-    print(motion_mat)
+    # print(motion_mat.shape)
+    # print(motion_mat)
     return motion_mat
 
 """
@@ -82,7 +82,7 @@ by Matlab.
 """
 def getRotatingBarFlowMatrix(vGT_path):
     a = np.load(vGT_path, allow_pickle=True)
-    print(a.shape)
+    # print(a.shape)
     return a
 
 """
@@ -534,88 +534,96 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
 
 
 def transform_all_subdirs(startpath, px_size, pe):
-    workbook = xlsxwriter.Workbook(os.path.join(startpath, "stats.xlsx"))
-    worksheet = workbook.add_worksheet()
+   
     # write header
-    first_line = ["Full", "", "", "angular error", "", "", "","","endpoint error", "", "", "","","rel endpoint", "", "", "","",]
-    second_line = ["Name", "Number of OF-Vectors", "ZeroVectors", "mean", "std", "p2.5", "p10", "p30", "mean", "std", "p1", "p7.5", "p20", "mean", "std", "p0.1", "p0.3", "p0.6"]
+    
     peOrig1, peOrig2, peOrig3 = pe
-    for i in range(len(first_line)):
-        worksheet.write_string(0, i, first_line[i])
-        worksheet.write_string(1, i, second_line[i])
+    
     all_stats = []
+    new_Folder = False
     for root, dirs, files in os.walk(startpath, topdown=False):
-        
-            for file in files:
-                if file.endswith(".npy") and "ofvec" in file:
-                    print("File is:", file)
-                    file_split = file[:-4].split("_")
-                    name_of_method = file_split[0] + "_" + file_split[1]
-                    zero_vectors = int( file_split[file_split.index("zeroVec") + 1] )
-                    if "full" in file or "all" in file or "everyI" in file or "everyi" in file or "complex" in file or "window" in file:
-                        
-                        if "full" in file:
-                            x_res = x_full_res
-                            y_res = y_full_res
-                            px_size = px_size
-                            downsampling = 1
-                            
-                            pe1 = peOrig1 *2
-                            pe2 = peOrig2 *2
-                            pe3 = peOrig3 *2
-                        else:
-                            x_res = x_down_res
-                            y_res = y_down_res
-                            px_size = px_size * 2
-                            downsampling = 2
-
-                            pe1 = peOrig1
-                            pe2 = peOrig2
-                            pe3 = peOrig3
-
-                        if "translatingSquare" in root or "rotatingBar" in root:
-                            if "full" in file: 
-                                vGT_name = "vGT.npy"
-                                vGT_path = os.path.join(base_path, vGT_name)
-                            else:
-                                vGT_name = "vGT_down.npy"
-                                vGT_path = os.path.join(base_path, vGT_name)
-
-                        ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
-                        if "rotatingBar" in root:
-                            stats = evaluateRotatingBarFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        elif "translatingCart" in root:
-                            stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        elif "rotatingDisk" in root:
-                            stats = evaluateRotationalFlow(ofVectors, w_z, px_size, x_res, y_res, os.path.join(root, file[:-4]), radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        elif "translatingSquare" in root:
-                            # stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), x_res, y_res, downsampling, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                            stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
-                        else:
-                            print("Error: no methods apply")
-                    else:
-                        print("file:", file, " is unknown")
+        new_Folder = True
+        all_stats = []
+        for file in files:
+            if file.endswith(".npy") and "ofvec" in file:
+                print("File is:", file)
+                file_split = file[:-4].split("_")
+                name_of_method = file_split[0] + "_" + file_split[1]
+                zero_vectors = int( file_split[file_split.index("zeroVec") + 1] )
+                if "full" in file or "all" in file or "everyI" in file or "everyi" in file or "complex" in file or "window" in file:
                     
-                    stats[1] += zero_vectors
-                    stats.insert(0,name_of_method)
-                    all_stats.append(stats)
+                    if "full" in file:
+                        x_res = x_full_res
+                        y_res = y_full_res
+                        px_size = px_size
+                        downsampling = 1
+                        
+                        pe1 = peOrig1 *2
+                        pe2 = peOrig2 *2
+                        pe3 = peOrig3 *2
+                    else:
+                        x_res = x_down_res
+                        y_res = y_down_res
+                        px_size = px_size * 2
+                        downsampling = 2
 
+                        pe1 = peOrig1
+                        pe2 = peOrig2
+                        pe3 = peOrig3
 
-    # creating xlsx
-    for i in range(len(all_stats)):
-        stat = all_stats[i]
-        for j in range(len(stat)):
-            if j == 0:
-                worksheet.write_string(2+i, j, stat[j])
-            else:    
-                worksheet.write_number(2+i, j, stat[j])
-    workbook.close()
+                    if "translatingSquare" in root or "rotatingBar" in root:
+                        if "full" in file: 
+                            vGT_name = "vGT.npy"
+                            vGT_path = os.path.join(base_path, vGT_name)
+                        else:
+                            vGT_name = "vGT_down.npy"
+                            vGT_path = os.path.join(base_path, vGT_name)
+
+                    ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
+                    if "rotatingBar" in root:
+                        stats = evaluateRotatingBarFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                    elif "translatingCart" in root:
+                        stats = evaluateTranlationFlow(ofVectors, focallength, Z, T_x, px_size, x_res, y_res, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                    elif "rotatingDisk" in root:
+                        stats = evaluateRotationalFlow(ofVectors, w_z, px_size, x_res, y_res, os.path.join(root, file[:-4]), radius, focallength, Z, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                    elif "translatingSquare" in root:
+                        # stats = evaluateTranslatingSquareNormalFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), x_res, y_res, downsampling, pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                        stats = evaluateTranslatingSquareFullFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
+                    else:
+                        print("Error: no methods apply")
+                else:
+                    print("file:", file, " is unknown")
+                
+                if new_Folder:
+                    workbook = xlsxwriter.Workbook(os.path.join(root, "stats.xlsx"))
+                    worksheet = workbook.add_worksheet()
+                    first_line = ["Full", "", "", "angular error", "", "", "","","endpoint error", "", "", "","","rel endpoint", "", "", "","",]
+                    second_line = ["Name", "Number of OF-Vectors", "ZeroVectors", "mean", "std", "p2.5", "p10", "p30", "mean", "std", "p"+str(pe1), "p"+str(pe2), "p"+str(pe3), "mean", "std", "p0.1", "p0.3", "p0.6"]
+                    for i in range(len(first_line)):
+                            worksheet.write_string(0, i, first_line[i])
+                            worksheet.write_string(1, i, second_line[i])
+                    new_Folder = False
+
+                stats[1] += zero_vectors
+                stats.insert(0,name_of_method)
+                all_stats.append(stats)
+
+        if not new_Folder:
+            # creating xlsx
+            for i in range(len(all_stats)):
+                stat = all_stats[i]
+                for j in range(len(stat)):
+                    if j == 0:
+                        worksheet.write_string(2+i, j, stat[j])
+                    else:    
+                        worksheet.write_number(2+i, j, stat[j])
+            workbook.close()
 
 
 
 
 # path to file of OF-vectors
-base_path = "C:\\Users\dominik\OneDrive - Technische Universität Berlin\Dokumente\degreeProject\cameraRecordings\OFRecording\\translatingSquare\\downEveryEvent"
+base_path = r"C:\Users\dominik\Desktop\translatingCart"
 
 
 focallength = 0.008
