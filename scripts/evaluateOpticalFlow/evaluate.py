@@ -37,8 +37,8 @@ def getRotationalMatrix(w_z, px_size, x_res, y_res):
         for x in range(- (x_res//2) , (x_res//2), 1):
             #print("x:",x, " y: ", y)
             x_m = x * px_size + 0.5 * px_size
-            x_flow = w_z * y_m
-            y_flow = w_z * x_m
+            x_flow = - w_z * y_m
+            y_flow =   w_z * x_m
             
             #convert to pixel speed
             x_flow = x_flow/px_size
@@ -533,7 +533,7 @@ def evaluateTranslatingSquareNormalFlow(arr, vGT_path, filename, \
 
 
 
-def transform_all_subdirs(startpath, px_size, pe):
+def transform_all_subdirs(startpath, px_size_orig, pe):
    
     # write header
     
@@ -555,7 +555,7 @@ def transform_all_subdirs(startpath, px_size, pe):
                     if "full" in file:
                         x_res = x_full_res
                         y_res = y_full_res
-                        px_size = px_size
+                        px_size = px_size_orig
                         downsampling = 1
                         
                         pe1 = peOrig1 *2
@@ -564,7 +564,7 @@ def transform_all_subdirs(startpath, px_size, pe):
                     else:
                         x_res = x_down_res
                         y_res = y_down_res
-                        px_size = px_size * 2
+                        px_size = px_size_orig * 2
                         downsampling = 2
 
                         pe1 = peOrig1
@@ -579,7 +579,7 @@ def transform_all_subdirs(startpath, px_size, pe):
                             vGT_name = "vGT_down.npy"
                             vGT_path = os.path.join(base_path, vGT_name)
 
-                    ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
+                    ofVectors = np.load(os.path.join(root, file), allow_pickle = True)[:100000]
                     if "rotatingBar" in root:
                         stats = evaluateRotatingBarFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                     elif "translatingCart" in root:
@@ -623,15 +623,15 @@ def transform_all_subdirs(startpath, px_size, pe):
 
 
 # path to file of OF-vectors
-base_path = r"C:\Users\dominik\Desktop\translatingCart"
+base_path = r"C:\Users\dominik\Desktop\rotatingDisk"
 
 
 focallength = 0.008
-px_size = 1.5E-5
-Z = 0.3
+px_size_orig = 1.5E-5
+Z = 0.265
 radius = 0.1
 T_x = 0.01
-rpm = 10
+rpm = -10.08
 x_full_res = 640
 y_full_res = 480
 x_down_res = 320
@@ -646,7 +646,7 @@ pre1, pre2, pre3 = 0.1, 0.3, 0.6
 
 w_z = 2 * np.pi * rpm /60
 
-transform_all_subdirs(base_path, px_size, pe)
+transform_all_subdirs(base_path, px_size_orig, pe)
 
 #call the evaluation
 
