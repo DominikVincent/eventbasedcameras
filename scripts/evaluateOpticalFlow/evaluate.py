@@ -579,7 +579,7 @@ def transform_all_subdirs(startpath, px_size_orig, pe):
                             vGT_name = "vGT_down.npy"
                             vGT_path = os.path.join(base_path, vGT_name)
 
-                    ofVectors = np.load(os.path.join(root, file), allow_pickle = True)[:100000]
+                    ofVectors = np.load(os.path.join(root, file), allow_pickle = True)
                     if "rotatingBar" in root:
                         stats = evaluateRotatingBarFlow(ofVectors, vGT_path, os.path.join(root, file[:-4]), pa1, pa2, pa3, pe1, pe2, pe3, pre1, pre2, pre3)
                     elif "translatingCart" in root:
