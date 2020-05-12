@@ -626,7 +626,7 @@ def transform_all_subdirs(startpath, px_size_orig, pe):
 base_path = r"C:\Users\dominik\Desktop\rotatingDisk"
 
 
-focallength = 0.008
+focallength = 0.00935
 px_size_orig = 1.5E-5
 Z = 0.265
 radius = 0.1
