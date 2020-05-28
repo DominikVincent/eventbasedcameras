@@ -11,3 +11,4 @@ The following scripts are available:
  - analysis of of-correctness in the given scenes of the thesis
  - analysis of spatial accuracy see at the thesis for more detail
  - analsis of the cameras flash response see thesis for more detail
+ - some more minor scripts for generating some pictures and graphs
